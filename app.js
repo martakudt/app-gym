@@ -26,9 +26,14 @@ const DEFAULT_DATA = {
   ]
 };
 
+const ADMIN_EMAIL = 'martatorresg15@gmail.com';
+
 let data = null;
 let currentUser = null;
+let isAdmin = false;
+let isApproved = false;
 let unsubscribeData = null;
+let unsubscribeProfile = null;
 
 // ============ AUTH ============
 function handleLogin() {
@@ -72,6 +77,16 @@ function handleRegister() {
   }
 
   auth.createUserWithEmailAndPassword(email, password)
+    .then(cred => {
+      // Create profile as pending (admin is auto-approved)
+      const userEmail = cred.user.email;
+      const approved = userEmail === ADMIN_EMAIL;
+      return db.collection('profiles').doc(cred.user.uid).set({
+        email: userEmail,
+        approved: approved,
+        createdAt: todayStr()
+      });
+    })
     .catch(err => {
       const messages = {
         'auth/email-already-in-use': 'Ya existe una cuenta con ese email',
@@ -85,6 +100,7 @@ function handleRegister() {
 function handleLogout() {
   if (confirm('Cerrar sesion?')) {
     if (unsubscribeData) unsubscribeData();
+    if (unsubscribeProfile) unsubscribeProfile();
     auth.signOut();
   }
 }
@@ -93,17 +109,84 @@ function handleLogout() {
 auth.onAuthStateChanged(user => {
   if (user) {
     currentUser = user;
+    isAdmin = user.email === ADMIN_EMAIL;
     document.getElementById('login-screen').style.display = 'none';
-    document.getElementById('app-container').style.display = 'block';
-    listenToUserData();
+    checkApproval();
   } else {
     currentUser = null;
     data = null;
+    isAdmin = false;
+    isApproved = false;
     if (unsubscribeData) unsubscribeData();
+    if (unsubscribeProfile) unsubscribeProfile();
     document.getElementById('login-screen').style.display = 'flex';
     document.getElementById('app-container').style.display = 'none';
+    document.getElementById('pending-screen').style.display = 'none';
   }
 });
+
+function checkApproval() {
+  const profileRef = db.collection('profiles').doc(currentUser.uid);
+  unsubscribeProfile = profileRef.onSnapshot(doc => {
+    if (!doc.exists) {
+      // Profile doesn't exist yet (old user or admin) - create it
+      const approved = currentUser.email === ADMIN_EMAIL;
+      profileRef.set({
+        email: currentUser.email,
+        approved: approved,
+        createdAt: todayStr()
+      });
+      return;
+    }
+
+    const profile = doc.data();
+    isApproved = profile.approved === true;
+
+    if (isApproved) {
+      document.getElementById('pending-screen').style.display = 'none';
+      document.getElementById('app-container').style.display = 'block';
+      if (!unsubscribeData) listenToUserData();
+    } else {
+      document.getElementById('app-container').style.display = 'none';
+      document.getElementById('pending-screen').style.display = 'flex';
+    }
+  });
+}
+
+// ============ ADMIN: Approve users ============
+function openAdminPanel() {
+  db.collection('profiles').where('approved', '==', false).get().then(snapshot => {
+    let listHtml = '';
+    if (snapshot.empty) {
+      listHtml = '<p style="color:var(--text-muted);text-align:center;padding:20px">No hay solicitudes pendientes</p>';
+    } else {
+      snapshot.forEach(doc => {
+        const p = doc.data();
+        listHtml += `
+          <div class="history-item">
+            <div>
+              <div class="history-date">${p.email}</div>
+              <div style="font-size:12px;color:var(--text-muted)">Registro: ${p.createdAt || '?'}</div>
+            </div>
+            <button class="btn-small btn-history" onclick="approveUser('${doc.id}')">Aprobar</button>
+          </div>`;
+      });
+    }
+
+    openModal(`
+      <h2>Solicitudes pendientes</h2>
+      <div class="history-list">${listHtml}</div>
+      <button class="btn-secondary" onclick="closeModal()" style="margin-top:16px">Cerrar</button>
+    `);
+  });
+}
+
+function approveUser(uid) {
+  db.collection('profiles').doc(uid).update({ approved: true }).then(() => {
+    toast('Usuario aprobado');
+    openAdminPanel();
+  });
+}
 
 // ============ FIRESTORE DATA ============
 function getUserDocRef() {
@@ -115,10 +198,8 @@ function listenToUserData() {
   unsubscribeData = docRef.onSnapshot(doc => {
     if (doc.exists) {
       data = doc.data();
-      // Ensure trash array exists
       if (!data.trash) data.trash = [];
     } else {
-      // First time user - create default data
       data = JSON.parse(JSON.stringify(DEFAULT_DATA));
       data.trash = [];
       docRef.set(data);
@@ -126,7 +207,6 @@ function listenToUserData() {
     render();
   }, err => {
     console.error('Firestore error:', err);
-    // Fallback to local if offline and no cached data
     if (!data) {
       data = JSON.parse(JSON.stringify(DEFAULT_DATA));
       data.trash = [];
@@ -200,6 +280,7 @@ function renderHeader() {
   document.getElementById('routine-header').innerHTML = `
     <span class="routine-title">${routine.name}</span>
     <div class="routine-actions">
+      ${isAdmin ? `<button class="btn-icon admin-btn" onclick="openAdminPanel()">&#128101;</button>` : ''}
       <button class="btn-icon" onclick="openTrash()">&#9851;</button>
       <button class="btn-icon" onclick="openEditRoutine()">&#9998;</button>
       ${data.routines.length > 1 ? `<button class="btn-icon danger" onclick="deleteRoutine()">&#128465;</button>` : ''}
