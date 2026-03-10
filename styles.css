@@ -886,3 +886,9 @@ body {
 .btn-logout:active {
   background: rgba(239, 68, 68, 0.2);
 }
+
+.admin-btn {
+  color: var(--accent-amber) !important;
+  border-color: rgba(245, 158, 11, 0.3) !important;
+  background: rgba(245, 158, 11, 0.08) !important;
+}
