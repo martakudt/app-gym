@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#0a0e1a">
+  <link rel="manifest" href="./manifest.json">
+  <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%230a0e1a'/><text x='50' y='65' font-size='55' text-anchor='middle'>🏋️</text></svg>">
+  <title>Rutina Gym Marta</title>
+  <link rel="stylesheet" href="./styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+</head>
+<body>
+
+  <!-- Navbar -->
+  <nav class="navbar">
+    <div class="nav-brand">
+      <span class="nav-logo">G</span>
+      <span class="nav-title">GymTracker</span>
+    </div>
+    <div class="nav-tabs" id="nav-tabs"></div>
+    <div class="nav-status">
+      <span class="status-dot"></span>
+      <span class="status-text">ACTIVO</span>
+    </div>
+  </nav>
+
+  <!-- Stats cards -->
+  <div class="stats-row" id="stats-row"></div>
+
+  <!-- Routine header -->
+  <div class="routine-header" id="routine-header"></div>
+
+  <!-- Exercises grid -->
+  <div class="exercises" id="exercises"></div>
+
+  <!-- FAB button -->
+  <button class="fab" onclick="openAddExercise()">+</button>
+
+  <!-- Modal -->
+  <div class="modal-overlay" id="modal-overlay">
+    <div class="modal">
+      <div class="modal-handle"></div>
+      <div id="modal-content"></div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+  <script src="./app.js"></script>
+</body>
+</html>
