@@ -241,8 +241,7 @@ function renderExercises() {
               </div>
             ` : ''}
             <div class="exercise-actions">
-              <button class="btn-small btn-history" onclick="openHistory(${i})">&#128202; Historial</button>
-              <button class="btn-small btn-delete" onclick="deleteExercise(${i})">Eliminar</button>
+              <button class="btn-full btn-history" onclick="openHistory(${i})">&#128202; Ver historial y graficas</button>
             </div>
           </div>
         </div>
@@ -563,6 +562,7 @@ function openHistory(exIndex) {
     <h3>Registros</h3>
     <div class="history-list">${listHtml}</div>
     <button class="btn-secondary" onclick="closeModal()" style="margin-top:16px">Cerrar</button>
+    <button class="btn-danger-full" onclick="deleteExercise(${exIndex})">Eliminar ejercicio</button>
   `);
 
   if (hasChartData) {
