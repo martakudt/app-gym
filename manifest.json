@@ -1,6 +1,6 @@
 {
-  "name": "Rutina Gym Marta",
-  "short_name": "Gym Marta",
+  "name": "GymTracker",
+  "short_name": "GymTracker",
   "description": "App para registrar rutinas del gimnasio",
   "start_url": "./index.html",
   "display": "standalone",

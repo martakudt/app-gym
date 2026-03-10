@@ -20,38 +20,8 @@ const DEFAULT_DATA = {
   activeRoutine: 0,
   routines: [
     {
-      name: "DIA A - PIERNA + GLUTEO",
-      exercises: [
-        { name: "Sentadilla Trasera", sets: 3, reps: "8-12", weight: 30, done: false, logs: [] },
-        { name: "Hip Thrust", sets: 3, reps: "10-15", weight: 70, done: false, logs: [] },
-        { name: "Peso Muerto Rumano", sets: 3, reps: "8-12", weight: 7.5, done: false, logs: [] },
-        { name: "Sentadilla Bulgara", sets: 3, reps: "8-12", weight: 10, done: false, logs: [] },
-        { name: "Gemelos", sets: 3, reps: "8-12", weight: 12.5, done: false, logs: [] }
-      ]
-    },
-    {
-      name: "DIA B - TORSO",
-      exercises: [
-        { name: "Jalon al Pecho", sets: 3, reps: "8-12", weight: 5, unit: "bloques", done: false, logs: [] },
-        { name: "Remo con Barra", sets: 3, reps: "8-12", weight: 7.5, unit: "kg", done: false, logs: [] },
-        { name: "Press Plano (mancuernas)", sets: 3, reps: "8-12", weight: 10, unit: "kg", done: false, logs: [] },
-        { name: "Press Militar", sets: 3, reps: "10-15", weight: 8, unit: "kg", done: false, logs: [] },
-        { name: "Elevaciones Laterales", sets: 3, reps: "10-15", weight: 5, unit: "kg", done: false, logs: [] },
-        { name: "Curl Biceps (mancuerna sentada)", sets: 3, reps: "8-12", weight: 7.5, unit: "kg", done: false, logs: [] },
-        { name: "Triceps en polea", sets: 3, reps: "8-12", weight: 4, unit: "bloques", done: false, logs: [] }
-      ]
-    },
-    {
-      name: "DIA C - FULLBODY",
-      exercises: [
-        { name: "Patada de gluteo", sets: 3, reps: "8-12", weight: 18.1, unit: "kg", done: false, logs: [] },
-        { name: "Remo gironda", sets: 3, reps: "8-12", weight: 18.1, unit: "kg", done: false, logs: [] },
-        { name: "Step up", sets: 3, reps: "8-12", weight: 10, unit: "kg", done: false, logs: [] },
-        { name: "Dominadas asistidas", sets: 3, reps: "8-fallo", weight: "morada", unit: "goma", done: false, logs: [] },
-        { name: "Elevaciones Laterales", sets: 3, reps: "12-15", weight: 5, unit: "kg", done: false, logs: [] },
-        { name: "Curl Biceps (arana)", sets: 2, reps: "8-12", weight: 7.5, unit: "kg", done: false, logs: [] },
-        { name: "Press Frances Mancuernas", sets: 3, reps: "8-12", weight: 5, unit: "kg", done: false, logs: [] }
-      ]
+      name: "Mi rutina",
+      exercises: []
     }
   ]
 };
