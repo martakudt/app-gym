@@ -240,7 +240,7 @@ function render() {
 }
 
 function renderNav() {
-  const container = document.getElementById('nav-tabs');
+  const container = document.getElementById('routine-tabs');
   let html = data.routines.map((r, i) => {
     const label = r.name.split(' ').slice(0, 2).join(' ');
     return `<button class="nav-tab ${i === data.activeRoutine ? 'active' : ''}" onclick="switchTab(${i})">${label}</button>`;
