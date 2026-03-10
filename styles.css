@@ -81,39 +81,46 @@ body {
   .nav-title { display: block; }
 }
 
-.nav-tabs {
+/* ============ ROUTINE TABS ============ */
+.routine-tabs {
   display: flex;
-  gap: 4px;
+  gap: 8px;
+  padding: 12px 16px;
   overflow-x: auto;
   scrollbar-width: none;
-  flex: 1;
   justify-content: center;
 }
 
-.nav-tabs::-webkit-scrollbar { display: none; }
+.routine-tabs::-webkit-scrollbar { display: none; }
 
 .nav-tab {
-  padding: 6px 14px;
-  border-radius: 8px;
-  border: none;
-  background: transparent;
+  padding: 10px 20px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--card-alt);
   color: var(--text-secondary);
-  font-size: 12px;
-  font-weight: 600;
+  font-size: 13px;
+  font-weight: 700;
   cursor: pointer;
   transition: all 0.2s;
   white-space: nowrap;
-  letter-spacing: 0.3px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
 }
 
 .nav-tab.active {
   background: var(--accent);
   color: white;
+  border-color: var(--accent);
+  box-shadow: 0 2px 12px rgba(59, 130, 246, 0.4);
 }
 
 .nav-tab-add {
   color: var(--text-muted);
   border: 1px dashed var(--border-light);
+  background: transparent;
+  font-size: 18px;
+  padding: 8px 16px;
 }
 
 .nav-status {
