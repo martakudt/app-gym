@@ -1,4 +1,4 @@
-const CACHE_NAME = 'gym-app-v5';
+const CACHE_NAME = 'gym-app-v6';
 const ASSETS = [
   './index.html',
   './styles.css',
@@ -21,6 +21,15 @@ self.addEventListener('activate', e => {
 });
 
 self.addEventListener('fetch', e => {
+  // Don't cache Firebase API calls
+  if (e.request.url.includes('firebaseio.com') ||
+      e.request.url.includes('googleapis.com') ||
+      e.request.url.includes('firestore.googleapis.com') ||
+      e.request.url.includes('identitytoolkit.googleapis.com') ||
+      e.request.url.includes('securetoken.googleapis.com')) {
+    return;
+  }
+
   e.respondWith(
     fetch(e.request)
       .then(response => {

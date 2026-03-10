@@ -1,61 +1,174 @@
-// ============ DATA ============
+// ============ FIREBASE CONFIG ============
+const firebaseConfig = {
+  apiKey: "AIzaSyBxHSuyY76Z-Xaef3Lyyjsd1coAd-BYjdU",
+  authDomain: "app-gym-80335.firebaseapp.com",
+  projectId: "app-gym-80335",
+  storageBucket: "app-gym-80335.firebasestorage.app",
+  messagingSenderId: "273259998120",
+  appId: "1:273259998120:web:3ae75a63a3b03ac7c00b9d"
+};
+
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
+
+// Enable offline persistence
+db.enablePersistence().catch(() => {});
+
+// ============ DEFAULT DATA ============
 const DEFAULT_DATA = {
   activeRoutine: 0,
   routines: [
     {
-      name: "DÍA A ⚡ PIERNA + GLÚTEO",
+      name: "DIA A - PIERNA + GLUTEO",
       exercises: [
-        { name: "Sentadilla Trasera", sets: 3, reps: "8-12", weight: 30, done: false, logs: [{ date: "2026-03-02", weight: 30, reps: [10, 9, 8] }] },
-        { name: "Hip Thrust", sets: 3, reps: "10-15", weight: 70, done: false, logs: [{ date: "2026-03-02", weight: 70, reps: [12, 12, 10] }] },
-        { name: "Peso Muerto Rumano", sets: 3, reps: "8-12", weight: 7.5, done: false, logs: [{ date: "2026-03-02", weight: 7.5, reps: [12, 10] }] },
-        { name: "Sentadilla Búlgara", sets: 3, reps: "8-12", weight: 10, done: false, logs: [{ date: "2026-03-02", weight: 10, reps: [12, 12, 10] }] },
-        { name: "Gemelos", sets: 3, reps: "8-12", weight: 12.5, done: false, logs: [{ date: "2026-03-02", weight: 12.5, reps: [12, 12, 12] }] }
+        { name: "Sentadilla Trasera", sets: 3, reps: "8-12", weight: 30, done: false, logs: [] },
+        { name: "Hip Thrust", sets: 3, reps: "10-15", weight: 70, done: false, logs: [] },
+        { name: "Peso Muerto Rumano", sets: 3, reps: "8-12", weight: 7.5, done: false, logs: [] },
+        { name: "Sentadilla Bulgara", sets: 3, reps: "8-12", weight: 10, done: false, logs: [] },
+        { name: "Gemelos", sets: 3, reps: "8-12", weight: 12.5, done: false, logs: [] }
       ]
     },
     {
-      name: "DÍA B 🔥 TORSO",
+      name: "DIA B - TORSO",
       exercises: [
-        { name: "Jalón al Pecho", sets: 3, reps: "8-12", weight: 5, unit: "bloques", done: false, logs: [{ date: "2026-03-03", weight: 5, reps: [12, 11, 10] }] },
-        { name: "Remo con Barra", sets: 3, reps: "8-12", weight: 7.5, unit: "kg", done: false, logs: [{ date: "2026-03-03", weight: 7.5, reps: [12, 10, 8] }] },
-        { name: "Press Plano (mancuernas)", sets: 3, reps: "8-12", weight: 10, unit: "kg", done: false, logs: [{ date: "2026-03-03", weight: 10, reps: [12, 10, 8] }] },
-        { name: "Press Militar", sets: 3, reps: "10-15", weight: 8, unit: "kg", done: false, logs: [{ date: "2026-03-03", weight: 8, reps: [15, 13, 10] }] },
-        { name: "Elevaciones Laterales", sets: 3, reps: "10-15", weight: 5, unit: "kg", done: false, logs: [{ date: "2026-03-03", weight: 5, reps: [15, 15, 15] }] },
-        { name: "Curl Bíceps (mancuerna sentada)", sets: 3, reps: "8-12", weight: 7.5, unit: "kg", done: false, logs: [{ date: "2026-03-03", weight: 7.5, reps: [12, 10, 9] }] },
-        { name: "Tríceps en polea", sets: 3, reps: "8-12", weight: 4, unit: "bloques", done: false, logs: [{ date: "2026-03-03", weight: 4, reps: [12, 12, 12] }] }
+        { name: "Jalon al Pecho", sets: 3, reps: "8-12", weight: 5, unit: "bloques", done: false, logs: [] },
+        { name: "Remo con Barra", sets: 3, reps: "8-12", weight: 7.5, unit: "kg", done: false, logs: [] },
+        { name: "Press Plano (mancuernas)", sets: 3, reps: "8-12", weight: 10, unit: "kg", done: false, logs: [] },
+        { name: "Press Militar", sets: 3, reps: "10-15", weight: 8, unit: "kg", done: false, logs: [] },
+        { name: "Elevaciones Laterales", sets: 3, reps: "10-15", weight: 5, unit: "kg", done: false, logs: [] },
+        { name: "Curl Biceps (mancuerna sentada)", sets: 3, reps: "8-12", weight: 7.5, unit: "kg", done: false, logs: [] },
+        { name: "Triceps en polea", sets: 3, reps: "8-12", weight: 4, unit: "bloques", done: false, logs: [] }
       ]
     },
     {
-      name: "DÍA C 🏋🏼‍♀️ FULLBODY",
+      name: "DIA C - FULLBODY",
       exercises: [
-        { name: "Patada de glúteo", sets: 3, reps: "8-12", weight: 18.1, unit: "kg", done: false, logs: [{ date: "2026-02-27", weight: 18.1, reps: [12, 10, 8] }, { date: "2026-03-05", weight: 18.1, reps: [12, 12, 10] }] },
-        { name: "Remo gironda", sets: 3, reps: "8-12", weight: 18.1, unit: "kg", done: false, logs: [{ date: "2026-02-27", weight: 18.1, reps: [14, 13, 12] }, { date: "2026-03-05", weight: 18.1, reps: [15, 14, 11] }] },
-        { name: "Step up", sets: 3, reps: "8-12", weight: 10, unit: "kg", done: false, logs: [{ date: "2026-02-27", weight: 7.5, reps: [12, 12, 12] }, { date: "2026-03-05", weight: 10, reps: [12, 11, 10] }] },
-        { name: "Dominadas asistidas", sets: 3, reps: "8-fallo", weight: "morada", unit: "goma", done: false, logs: [{ date: "2026-02-27", weight: "morada", reps: [8, 6, 5] }, { date: "2026-03-05", weight: "morada", reps: [8, 5, 4] }] },
-        { name: "Elevaciones Laterales", sets: 3, reps: "12-15", weight: 5, unit: "kg", done: false, logs: [{ date: "2026-02-27", weight: 5, reps: [15, 10, 10] }, { date: "2026-03-05", weight: 5, reps: [15, 15, 13] }] },
-        { name: "Curl Bíceps (araña)", sets: 2, reps: "8-12", weight: 7.5, unit: "kg", done: false, logs: [{ date: "2026-02-27", weight: 7.5, reps: [12, 7] }, { date: "2026-03-05", weight: 7.5, reps: [9, 7] }] },
-        { name: "Press Francés Mancuernas", sets: 3, reps: "8-12", weight: 5, unit: "kg", done: false, logs: [{ date: "2026-02-27", weight: 5, reps: [12, 10, 8] }, { date: "2026-03-05", weight: 5, reps: [12, 10, 8] }] }
+        { name: "Patada de gluteo", sets: 3, reps: "8-12", weight: 18.1, unit: "kg", done: false, logs: [] },
+        { name: "Remo gironda", sets: 3, reps: "8-12", weight: 18.1, unit: "kg", done: false, logs: [] },
+        { name: "Step up", sets: 3, reps: "8-12", weight: 10, unit: "kg", done: false, logs: [] },
+        { name: "Dominadas asistidas", sets: 3, reps: "8-fallo", weight: "morada", unit: "goma", done: false, logs: [] },
+        { name: "Elevaciones Laterales", sets: 3, reps: "12-15", weight: 5, unit: "kg", done: false, logs: [] },
+        { name: "Curl Biceps (arana)", sets: 2, reps: "8-12", weight: 7.5, unit: "kg", done: false, logs: [] },
+        { name: "Press Frances Mancuernas", sets: 3, reps: "8-12", weight: 5, unit: "kg", done: false, logs: [] }
       ]
     }
   ]
 };
 
-const DATA_VERSION = 3;
+let data = null;
+let currentUser = null;
+let unsubscribeData = null;
 
-function loadData() {
-  const savedVersion = localStorage.getItem('gymAppVersion');
-  if (savedVersion !== String(DATA_VERSION)) {
-    localStorage.removeItem('gymApp');
-    localStorage.setItem('gymAppVersion', DATA_VERSION);
+// ============ AUTH ============
+function handleLogin() {
+  const email = document.getElementById('login-email').value.trim();
+  const password = document.getElementById('login-password').value;
+  const errorEl = document.getElementById('login-error');
+  errorEl.textContent = '';
+
+  if (!email || !password) {
+    errorEl.textContent = 'Rellena todos los campos';
+    return;
   }
-  const saved = localStorage.getItem('gymApp');
-  return saved ? JSON.parse(saved) : JSON.parse(JSON.stringify(DEFAULT_DATA));
+
+  auth.signInWithEmailAndPassword(email, password)
+    .catch(err => {
+      const messages = {
+        'auth/user-not-found': 'No existe una cuenta con ese email',
+        'auth/wrong-password': 'Contrasena incorrecta',
+        'auth/invalid-email': 'Email no valido',
+        'auth/invalid-credential': 'Email o contrasena incorrectos',
+        'auth/too-many-requests': 'Demasiados intentos, espera un momento'
+      };
+      errorEl.textContent = messages[err.code] || 'Error: ' + err.message;
+    });
 }
 
-function saveData(data) {
-  localStorage.setItem('gymApp', JSON.stringify(data));
+function handleRegister() {
+  const email = document.getElementById('login-email').value.trim();
+  const password = document.getElementById('login-password').value;
+  const errorEl = document.getElementById('login-error');
+  errorEl.textContent = '';
+
+  if (!email || !password) {
+    errorEl.textContent = 'Rellena todos los campos';
+    return;
+  }
+
+  if (password.length < 6) {
+    errorEl.textContent = 'La contrasena debe tener al menos 6 caracteres';
+    return;
+  }
+
+  auth.createUserWithEmailAndPassword(email, password)
+    .catch(err => {
+      const messages = {
+        'auth/email-already-in-use': 'Ya existe una cuenta con ese email',
+        'auth/invalid-email': 'Email no valido',
+        'auth/weak-password': 'La contrasena es muy debil (min 6 caracteres)'
+      };
+      errorEl.textContent = messages[err.code] || 'Error: ' + err.message;
+    });
 }
 
-let data = loadData();
+function handleLogout() {
+  if (confirm('Cerrar sesion?')) {
+    if (unsubscribeData) unsubscribeData();
+    auth.signOut();
+  }
+}
+
+// Listen for auth state changes
+auth.onAuthStateChanged(user => {
+  if (user) {
+    currentUser = user;
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('app-container').style.display = 'block';
+    listenToUserData();
+  } else {
+    currentUser = null;
+    data = null;
+    if (unsubscribeData) unsubscribeData();
+    document.getElementById('login-screen').style.display = 'flex';
+    document.getElementById('app-container').style.display = 'none';
+  }
+});
+
+// ============ FIRESTORE DATA ============
+function getUserDocRef() {
+  return db.collection('users').doc(currentUser.uid);
+}
+
+function listenToUserData() {
+  const docRef = getUserDocRef();
+  unsubscribeData = docRef.onSnapshot(doc => {
+    if (doc.exists) {
+      data = doc.data();
+      // Ensure trash array exists
+      if (!data.trash) data.trash = [];
+    } else {
+      // First time user - create default data
+      data = JSON.parse(JSON.stringify(DEFAULT_DATA));
+      data.trash = [];
+      docRef.set(data);
+    }
+    render();
+  }, err => {
+    console.error('Firestore error:', err);
+    // Fallback to local if offline and no cached data
+    if (!data) {
+      data = JSON.parse(JSON.stringify(DEFAULT_DATA));
+      data.trash = [];
+      render();
+    }
+  });
+}
+
+function saveData(d) {
+  if (!currentUser) return;
+  getUserDocRef().set(d).catch(err => console.error('Save error:', err));
+}
 
 // ============ STATS ============
 function getStats() {
@@ -69,6 +182,7 @@ function getStats() {
 
 // ============ RENDER ============
 function render() {
+  if (!data) return;
   renderNav();
   renderStats();
   renderHeader();
@@ -101,7 +215,7 @@ function renderStats() {
     <div class="stat-card">
       <div class="stat-label">Progreso</div>
       <div class="stat-value">${s.pct}%</div>
-      <div class="stat-sub">sesión</div>
+      <div class="stat-sub">sesion</div>
     </div>
     <div class="stat-card">
       <div class="stat-label">Registros</div>
@@ -116,9 +230,9 @@ function renderHeader() {
   document.getElementById('routine-header').innerHTML = `
     <span class="routine-title">${routine.name}</span>
     <div class="routine-actions">
-      <button class="btn-icon" onclick="openTrash()">♻️</button>
-      <button class="btn-icon" onclick="openEditRoutine()">✏️</button>
-      ${data.routines.length > 1 ? `<button class="btn-icon danger" onclick="deleteRoutine()">🗑️</button>` : ''}
+      <button class="btn-icon" onclick="openTrash()">&#9851;</button>
+      <button class="btn-icon" onclick="openEditRoutine()">&#9998;</button>
+      ${data.routines.length > 1 ? `<button class="btn-icon danger" onclick="deleteRoutine()">&#128465;</button>` : ''}
     </div>
   `;
 }
@@ -130,9 +244,9 @@ function renderExercises() {
   if (!routine.exercises.length) {
     container.innerHTML = `
       <div class="empty-state">
-        <span>🏋️</span>
-        <p>No hay ejercicios todavía</p>
-        <p style="font-size:13px; margin-top:8px">Pulsa + para añadir uno</p>
+        <span>&#127947;</span>
+        <p>No hay ejercicios todavia</p>
+        <p style="font-size:13px; margin-top:8px">Pulsa + para anadir uno</p>
       </div>`;
     return;
   }
@@ -143,7 +257,7 @@ function renderExercises() {
     return `
       <div class="exercise-card ${ex.done ? 'done' : ''}">
         <div class="exercise-top">
-          <button class="exercise-check" onclick="toggleDone(${i})">${ex.done ? '✓' : ''}</button>
+          <button class="exercise-check" onclick="toggleDone(${i})">${ex.done ? '&#10003;' : ''}</button>
           <div class="exercise-info">
             <div class="exercise-name">${ex.name}</div>
             <div class="exercise-meta">
@@ -152,12 +266,12 @@ function renderExercises() {
             </div>
             ${lastLog ? `
               <div class="last-log">
-                <span class="last-log-date">📍 ${formatDate(lastLog.date)}</span>
-                → ${formatLogDetail(lastLog, unit)}
+                <span class="last-log-date">&#128205; ${formatDate(lastLog.date)}</span>
+                &rarr; ${formatLogDetail(lastLog, unit)}
               </div>
             ` : ''}
             <div class="exercise-actions">
-              <button class="btn-small btn-history" onclick="openHistory(${i})">📊 Historial</button>
+              <button class="btn-small btn-history" onclick="openHistory(${i})">&#128202; Historial</button>
               <button class="btn-small btn-delete" onclick="deleteExercise(${i})">Eliminar</button>
             </div>
           </div>
@@ -193,25 +307,21 @@ function todayStr() {
 function switchTab(i) {
   data.activeRoutine = i;
   saveData(data);
-  render();
 }
 
 function toggleDone(i) {
   data.routines[data.activeRoutine].exercises[i].done = !data.routines[data.activeRoutine].exercises[i].done;
   saveData(data);
-  render();
 }
 
 function deleteExercise(i) {
-  if (confirm('¿Eliminar este ejercicio?')) {
+  if (confirm('Eliminar este ejercicio?')) {
     const removed = data.routines[data.activeRoutine].exercises.splice(i, 1)[0];
-    // Guardar en papelera por si se borra sin querer
     if (!data.trash) data.trash = [];
     data.trash.push({ routineIndex: data.activeRoutine, exercise: removed, deletedAt: todayStr() });
     if (data.trash.length > 20) data.trash.shift();
     saveData(data);
-    render();
-    toast('Eliminado (puedes restaurar desde ⚙️)');
+    toast('Eliminado (puedes restaurar desde papelera)');
   }
 }
 
@@ -229,10 +339,10 @@ function openTrash() {
             <button class="btn-small btn-history" onclick="restoreExercise(${realIndex})">Restaurar</button>
           </div>`;
       }).join('')
-    : '<p style="color:var(--text-muted);text-align:center;padding:20px">Papelera vacía</p>';
+    : '<p style="color:var(--text-muted);text-align:center;padding:20px">Papelera vacia</p>';
 
   openModal(`
-    <h2>🗑️ Papelera</h2>
+    <h2>&#128465; Papelera</h2>
     <div class="history-list">${listHtml}</div>
     <button class="btn-secondary" onclick="closeModal()" style="margin-top:16px">Cerrar</button>
   `);
@@ -244,16 +354,14 @@ function restoreExercise(trashIndex) {
   data.trash.splice(trashIndex, 1);
   saveData(data);
   closeModal();
-  render();
-  toast('✓ Ejercicio restaurado');
+  toast('Ejercicio restaurado');
 }
 
 function deleteRoutine() {
-  if (confirm(`¿Eliminar "${data.routines[data.activeRoutine].name}"?`)) {
+  if (confirm(`Eliminar "${data.routines[data.activeRoutine].name}"?`)) {
     data.routines.splice(data.activeRoutine, 1);
     data.activeRoutine = 0;
     saveData(data);
-    render();
   }
 }
 
@@ -332,8 +440,7 @@ function saveLog(exIndex) {
   ex.done = true;
   saveData(data);
   closeModal();
-  render();
-  toast('✓ Entreno guardado');
+  toast('Entreno guardado');
 }
 
 // Add exercise
@@ -345,7 +452,7 @@ function openAddExercise() {
       <input type="text" id="new-ex-name" placeholder="Ej: Press Banca">
     </div>
     <div class="form-group">
-      <label>Número de series</label>
+      <label>Numero de series</label>
       <input type="number" inputmode="numeric" id="new-ex-sets" value="3">
     </div>
     <div class="form-group">
@@ -364,7 +471,7 @@ function openAddExercise() {
       <label>Peso / Carga inicial</label>
       <input type="text" inputmode="decimal" id="new-ex-weight" value="0">
     </div>
-    <button class="btn-primary" onclick="saveNewExercise()">Añadir</button>
+    <button class="btn-primary" onclick="saveNewExercise()">Anadir</button>
     <button class="btn-secondary" onclick="closeModal()">Cancelar</button>
   `);
 }
@@ -387,8 +494,7 @@ function saveNewExercise() {
   });
   saveData(data);
   closeModal();
-  render();
-  toast('✓ Ejercicio añadido');
+  toast('Ejercicio anadido');
 }
 
 // Add / Edit routine
@@ -397,7 +503,7 @@ function openAddRoutine() {
     <h2>Nueva rutina</h2>
     <div class="form-group">
       <label>Nombre de la rutina</label>
-      <input type="text" id="new-routine-name" placeholder="Ej: DÍA D 💥 CARDIO">
+      <input type="text" id="new-routine-name" placeholder="Ej: DIA D - CARDIO">
     </div>
     <button class="btn-primary" onclick="saveNewRoutine()">Crear</button>
     <button class="btn-secondary" onclick="closeModal()">Cancelar</button>
@@ -411,8 +517,7 @@ function saveNewRoutine() {
   data.activeRoutine = data.routines.length - 1;
   saveData(data);
   closeModal();
-  render();
-  toast('✓ Rutina creada');
+  toast('Rutina creada');
 }
 
 function openEditRoutine() {
@@ -434,7 +539,6 @@ function saveEditRoutine() {
   data.routines[data.activeRoutine].name = name;
   saveData(data);
   closeModal();
-  render();
 }
 
 // History
@@ -446,7 +550,6 @@ function openHistory(exIndex) {
   const logs = [...ex.logs].reverse();
   const isNumeric = (unit === 'kg' || unit === 'bloques');
 
-  // Chart data (chronological order)
   const chartLogs = [...ex.logs];
   const chartLabels = chartLogs.map(l => formatDate(l.date));
   const chartWeights = isNumeric ? chartLogs.map(l => {
@@ -468,7 +571,7 @@ function openHistory(exIndex) {
               <div class="history-date">${formatDate(log.date)}</div>
               <div class="history-detail">${formatLogDetail(log, unit)}</div>
             </div>
-            <button class="history-delete" onclick="deleteLog(${exIndex}, ${realIndex})">×</button>
+            <button class="history-delete" onclick="deleteLog(${exIndex}, ${realIndex})">x</button>
           </div>`;
       }).join('')
     : '<p style="color:var(--text-muted); text-align:center; padding:20px">Sin registros</p>';
@@ -476,7 +579,7 @@ function openHistory(exIndex) {
   const hasChartData = chartLogs.length >= 1;
 
   openModal(`
-    <h2>📊 ${ex.name}</h2>
+    <h2>&#128202; ${ex.name}</h2>
     ${hasChartData ? `
       <div class="chart-tabs">
         <button class="chart-tab active" onclick="switchChart('weight', ${exIndex})">Peso</button>
@@ -616,7 +719,6 @@ function deleteLog(exIndex, logIndex) {
 function resetDailyChecks() {
   data.routines.forEach(r => r.exercises.forEach(e => e.done = false));
   saveData(data);
-  render();
   toast('Checks reseteados');
 }
 
@@ -630,9 +732,16 @@ function toast(msg) {
 
 // ============ INIT ============
 document.addEventListener('DOMContentLoaded', () => {
-  render();
   document.getElementById('modal-overlay').addEventListener('click', (e) => {
     if (e.target === e.currentTarget) closeModal();
+  });
+
+  // Allow login with Enter key
+  document.getElementById('login-password').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') handleLogin();
+  });
+  document.getElementById('login-email').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') document.getElementById('login-password').focus();
   });
 });
 
