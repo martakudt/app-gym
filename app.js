@@ -240,7 +240,7 @@ function render() {
 }
 
 function renderNav() {
-  const container = document.getElementById('nav-tabs');
+  const container = document.getElementById('routine-tabs');
   let html = data.routines.map((r, i) => {
     const label = r.name.split(' ').slice(0, 2).join(' ');
     return `<button class="nav-tab ${i === data.activeRoutine ? 'active' : ''}" onclick="switchTab(${i})">${label}</button>`;
@@ -302,7 +302,7 @@ function renderExercises() {
     return;
   }
 
-  container.innerHTML = routine.exercises.map((ex, i) => {
+  let exercisesHtml = routine.exercises.map((ex, i) => {
     const lastLog = ex.logs.length ? ex.logs[ex.logs.length - 1] : null;
     const unit = ex.unit || 'kg';
     return `
@@ -322,13 +322,43 @@ function renderExercises() {
               </div>
             ` : ''}
             <div class="exercise-actions">
-              <button class="btn-full btn-history" onclick="openHistory(${i})">&#128202; Ver historial y graficas</button>
+              <button class="btn-full btn-history" onclick="openHistory(${i})">&#128203; Ver historial</button>
             </div>
           </div>
         </div>
         <button class="btn-log" onclick="openLogModal(${i})">+ Registrar entreno</button>
       </div>`;
   }).join('');
+
+  // Chart section with exercise selector
+  const exercisesWithLogs = routine.exercises.filter(ex => ex.logs.length > 0);
+  if (exercisesWithLogs.length > 0) {
+    const options = routine.exercises.map((ex, i) =>
+      ex.logs.length > 0 ? `<option value="${i}">${ex.name}</option>` : ''
+    ).join('');
+    exercisesHtml += `
+      <div class="chart-section">
+        <h3 class="chart-section-title">&#128200; Graficas de progreso</h3>
+        <select class="chart-exercise-select" id="chart-exercise-select" onchange="loadRoutineChart()">
+          ${options}
+        </select>
+        <div class="chart-tabs" id="routine-chart-tabs">
+          <button class="chart-tab active" onclick="switchRoutineChart('weight')">Peso</button>
+          <button class="chart-tab" onclick="switchRoutineChart('reps')">Reps Media</button>
+          <button class="chart-tab" onclick="switchRoutineChart('volume')">Volumen</button>
+        </div>
+        <div class="chart-container">
+          <canvas id="routine-chart"></canvas>
+        </div>
+      </div>`;
+  }
+
+  container.innerHTML = exercisesHtml;
+
+  // Build chart if there are exercises with logs
+  if (exercisesWithLogs.length > 0) {
+    setTimeout(() => loadRoutineChart(), 50);
+  }
 }
 
 function formatLogDetail(log, unit) {
@@ -598,64 +628,65 @@ function openHistory(exIndex) {
   const ex = data.routines[data.activeRoutine].exercises[exIndex];
   const unit = ex.unit || 'kg';
   const logs = [...ex.logs].reverse();
-  const isNumeric = (unit === 'kg' || unit === 'bloques');
-
-  const chartLogs = [...ex.logs];
-  const chartLabels = chartLogs.map(l => formatDate(l.date));
-  const chartWeights = isNumeric ? chartLogs.map(l => {
-    if (l.weights) return Math.max(...l.weights.map(Number));
-    return Number(l.weight);
-  }) : [];
-  const chartAvgReps = chartLogs.map(l => {
-    const sum = l.reps.reduce((a, b) => a + b, 0);
-    return +(sum / l.reps.length).toFixed(1);
-  });
-  const chartTotalReps = chartLogs.map(l => l.reps.reduce((a, b) => a + b, 0));
 
   let listHtml = logs.length
-    ? logs.map((log, li) => {
-        const realIndex = ex.logs.length - 1 - li;
-        return `
-          <div class="history-item">
-            <div>
-              <div class="history-date">${formatDate(log.date)}</div>
-              <div class="history-detail">${formatLogDetail(log, unit)}</div>
-            </div>
-            <button class="history-delete" onclick="deleteLog(${exIndex}, ${realIndex})">x</button>
-          </div>`;
-      }).join('')
+    ? `<div class="history-table">
+        <div class="history-table-head">
+          <span>Fecha</span>
+          <span>Series</span>
+          <span>Peso</span>
+        </div>
+        ${logs.map((log, li) => {
+          const realIndex = ex.logs.length - 1 - li;
+          const seriesStr = log.reps.join(' - ');
+          const weightStr = log.weights
+            ? (log.weights.every(w => w === log.weights[0]) ? `${log.weights[0]} ${unit}` : log.weights.map(w => `${w}`).join(' - ') + ` ${unit}`)
+            : `${log.weight} ${unit}`;
+          return `
+            <div class="history-table-row">
+              <span class="history-cell-date">${formatDate(log.date)}</span>
+              <span class="history-cell-series">${seriesStr}</span>
+              <span class="history-cell-weight">${weightStr}</span>
+              <button class="history-delete" onclick="deleteLog(${exIndex}, ${realIndex})">x</button>
+            </div>`;
+        }).join('')}
+      </div>`
     : '<p style="color:var(--text-muted); text-align:center; padding:20px">Sin registros</p>';
 
-  const hasChartData = chartLogs.length >= 1;
-
   openModal(`
-    <h2>&#128202; ${ex.name}</h2>
-    ${hasChartData ? `
-      <div class="chart-tabs">
-        <button class="chart-tab active" onclick="switchChart('weight', ${exIndex})">Peso</button>
-        <button class="chart-tab" onclick="switchChart('reps', ${exIndex})">Reps Media</button>
-        <button class="chart-tab" onclick="switchChart('volume', ${exIndex})">Volumen</button>
-      </div>
-      <div class="chart-container">
-        <canvas id="history-chart"></canvas>
-      </div>
-    ` : ''}
-    <h3>Registros</h3>
+    <h2>&#128203; ${ex.name}</h2>
     <div class="history-list">${listHtml}</div>
     <button class="btn-secondary" onclick="closeModal()" style="margin-top:16px">Cerrar</button>
     <button class="btn-danger-full" onclick="deleteExercise(${exIndex})">Eliminar ejercicio</button>
   `);
-
-  if (hasChartData) {
-    setTimeout(() => buildChart('weight', chartLabels, chartWeights, chartAvgReps, chartTotalReps, unit, isNumeric), 50);
-  }
 }
 
-function switchChart(type, exIndex) {
-  document.querySelectorAll('.chart-tab').forEach(t => t.classList.remove('active'));
-  event.target.classList.add('active');
+let currentChartType = 'weight';
 
+function loadRoutineChart() {
+  const select = document.getElementById('chart-exercise-select');
+  if (!select) return;
+  const exIndex = parseInt(select.value);
+  currentChartType = 'weight';
+  const tabs = document.querySelectorAll('#routine-chart-tabs .chart-tab');
+  tabs.forEach(t => t.classList.remove('active'));
+  if (tabs[0]) tabs[0].classList.add('active');
+  buildRoutineChart(currentChartType, exIndex);
+}
+
+function switchRoutineChart(type) {
+  currentChartType = type;
+  const tabs = document.querySelectorAll('#routine-chart-tabs .chart-tab');
+  tabs.forEach(t => t.classList.remove('active'));
+  event.target.classList.add('active');
+  const select = document.getElementById('chart-exercise-select');
+  const exIndex = parseInt(select.value);
+  buildRoutineChart(type, exIndex);
+}
+
+function buildRoutineChart(type, exIndex) {
   const ex = data.routines[data.activeRoutine].exercises[exIndex];
+  if (!ex) return;
   const unit = ex.unit || 'kg';
   const isNumeric = (unit === 'kg' || unit === 'bloques');
   const chartLogs = [...ex.logs];
@@ -669,14 +700,13 @@ function switchChart(type, exIndex) {
     return +(sum / l.reps.length).toFixed(1);
   });
   const totalReps = chartLogs.map(l => l.reps.reduce((a, b) => a + b, 0));
-
   buildChart(type, labels, weights, avgReps, totalReps, unit, isNumeric);
 }
 
 function buildChart(type, labels, weights, avgReps, totalReps, unit, isNumeric) {
   if (historyChart) historyChart.destroy();
 
-  const ctx = document.getElementById('history-chart');
+  const ctx = document.getElementById('routine-chart');
   if (!ctx) return;
 
   const configs = {
@@ -702,8 +732,9 @@ function buildChart(type, labels, weights, avgReps, totalReps, unit, isNumeric) 
 
   if (type === 'weight' && !isNumeric) {
     type = 'reps';
-    document.querySelectorAll('.chart-tab').forEach(t => t.classList.remove('active'));
-    document.querySelectorAll('.chart-tab')[1].classList.add('active');
+    const tabs = document.querySelectorAll('#routine-chart-tabs .chart-tab');
+    tabs.forEach(t => t.classList.remove('active'));
+    if (tabs[1]) tabs[1].classList.add('active');
   }
 
   const cfg = configs[type];
