@@ -39,7 +39,7 @@ PWA (Progressive Web App) para registrar entrenos: rutinas de gimnasio serie a s
 ├── styles.css     # Estilos (tema claro/oscuro automático, mobile-first)
 ├── sw.js          # Service Worker (caché de assets, excluye llamadas a Firebase)
 ├── manifest.json  # Manifest de la PWA
-├── icon.svg       # Logo (rodaja de lima) e icono de la pestaña
+├── icon.svg       # Logo (macedonia de rodajas: naranja, lima y lila) e icono de la pestaña
 ├── icon-*.png     # Iconos de la app para iPhone (180) y Android (192, 512)
 ├── firestore.rules # Reglas de seguridad de Firestore
 └── LICENSE        # Licencia MIT
