@@ -165,8 +165,8 @@ function openAdminPanel() {
         listHtml += `
           <div class="history-item">
             <div>
-              <div class="history-date">${p.email}</div>
-              <div style="font-size:12px;color:var(--text-muted)">Registro: ${p.createdAt || '?'}</div>
+              <div class="history-date">${escapeHtml(p.email)}</div>
+              <div style="font-size:12px;color:var(--text-muted)">Registro: ${escapeHtml(p.createdAt || '?')}</div>
             </div>
             <button class="btn-small btn-history" onclick="approveUser('${doc.id}')">Aprobar</button>
           </div>`;
@@ -202,8 +202,10 @@ function listenToUserData() {
     } else {
       data = JSON.parse(JSON.stringify(DEFAULT_DATA));
       data.trash = [];
+      data.checksDate = todayStr();
       docRef.set(data);
     }
+    if (data.checksDate !== todayStr()) resetDailyChecks();
     render();
   }, err => {
     console.error('Firestore error:', err);
@@ -242,7 +244,7 @@ function render() {
 function renderNav() {
   const container = document.getElementById('routine-tabs');
   let html = data.routines.map((r, i) => {
-    const label = r.name.split(' ').slice(0, 2).join(' ');
+    const label = escapeHtml(r.name.split(' ').slice(0, 2).join(' '));
     return `<button class="nav-tab ${i === data.activeRoutine ? 'active' : ''}" onclick="switchTab(${i})">${label}</button>`;
   }).join('');
   html += `<button class="nav-tab nav-tab-add" onclick="openAddRoutine()">+</button>`;
@@ -278,7 +280,7 @@ function renderStats() {
 function renderHeader() {
   const routine = data.routines[data.activeRoutine];
   document.getElementById('routine-header').innerHTML = `
-    <span class="routine-title">${routine.name}</span>
+    <span class="routine-title">${escapeHtml(routine.name)}</span>
     <div class="routine-actions">
       ${isAdmin ? `<button class="btn-icon admin-btn" onclick="openAdminPanel()">&#128101;</button>` : ''}
       <button class="btn-icon" onclick="openTrash()">&#9851;</button>
@@ -306,14 +308,14 @@ function renderExercises() {
     const lastLog = ex.logs.length ? ex.logs[ex.logs.length - 1] : null;
     const unit = ex.unit || 'kg';
     return `
-      <div class="exercise-card ${ex.done ? 'done' : ''}">
+      <div class="exercise-card ${ex.done ? 'done' : ''}" data-index="${i}">
         <div class="exercise-top">
           <button class="exercise-check" onclick="toggleDone(${i})">${ex.done ? '&#10003;' : ''}</button>
           <div class="exercise-info">
-            <div class="exercise-name">${ex.name}</div>
+            <div class="exercise-name">${escapeHtml(ex.name)}</div>
             <div class="exercise-meta">
-              ${ex.sets}s x ${ex.reps}
-              <span class="exercise-weight">${ex.weight} ${unit}</span>
+              ${escapeHtml(ex.sets)}s x ${escapeHtml(ex.reps)}
+              <span class="exercise-weight">${escapeHtml(ex.weight)} ${escapeHtml(unit)}</span>
             </div>
             ${lastLog ? `
               <div class="last-log">
@@ -334,7 +336,7 @@ function renderExercises() {
   const exercisesWithLogs = routine.exercises.filter(ex => ex.logs.length > 0);
   if (exercisesWithLogs.length > 0) {
     const options = routine.exercises.map((ex, i) =>
-      ex.logs.length > 0 ? `<option value="${i}">${ex.name}</option>` : ''
+      ex.logs.length > 0 ? `<option value="${i}">${escapeHtml(ex.name)}</option>` : ''
     ).join('');
     exercisesHtml += `
       <div class="chart-section">
@@ -343,9 +345,9 @@ function renderExercises() {
           ${options}
         </select>
         <div class="chart-tabs" id="routine-chart-tabs">
-          <button class="chart-tab active" onclick="switchRoutineChart('weight')">Peso</button>
-          <button class="chart-tab" onclick="switchRoutineChart('reps')">Reps Media</button>
-          <button class="chart-tab" onclick="switchRoutineChart('volume')">Volumen</button>
+          <button class="chart-tab active" onclick="switchRoutineChart('weight', this)">Peso</button>
+          <button class="chart-tab" onclick="switchRoutineChart('reps', this)">Reps Media</button>
+          <button class="chart-tab" onclick="switchRoutineChart('volume', this)">Volumen</button>
         </div>
         <div class="chart-container">
           <canvas id="routine-chart"></canvas>
@@ -362,15 +364,25 @@ function renderExercises() {
 }
 
 function formatLogDetail(log, unit) {
+  unit = escapeHtml(unit);
   if (log.weights) {
     const allSame = log.weights.every(w => w === log.weights[0]);
     if (allSame) {
-      return `${log.weights[0]} ${unit} | <span class="last-log-reps">${log.reps.join(' - ')}</span>`;
+      return `${escapeHtml(log.weights[0])} ${unit} | <span class="last-log-reps">${log.reps.join(' - ')}</span>`;
     }
-    const parts = log.weights.map((w, i) => `${w}x${log.reps[i]}`);
+    const parts = log.weights.map((w, i) => `${escapeHtml(w)}x${log.reps[i]}`);
     return `<span class="last-log-reps">${parts.join(' - ')}</span> ${unit}`;
   }
-  return `${log.weight} ${unit} | <span class="last-log-reps">${log.reps.join(' - ')}</span>`;
+  return `${escapeHtml(log.weight)} ${unit} | <span class="last-log-reps">${log.reps.join(' - ')}</span>`;
+}
+
+function escapeHtml(value) {
+  return String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
 }
 
 function formatDate(dateStr) {
@@ -413,7 +425,7 @@ function openTrash() {
         return `
           <div class="history-item">
             <div>
-              <div class="history-date">${t.exercise.name}</div>
+              <div class="history-date">${escapeHtml(t.exercise.name)}</div>
               <div style="font-size:12px;color:var(--text-muted)">Eliminado: ${t.deletedAt}</div>
             </div>
             <button class="btn-small btn-history" onclick="restoreExercise(${realIndex})">Restaurar</button>
@@ -469,21 +481,21 @@ function openLogModal(exIndex) {
     seriesHtml += `
       <div class="series-row">
         <span class="series-label">Serie ${s + 1}</span>
-        <input type="${inputType}" ${inputAttrs} placeholder="${unit}" id="weight-${s}" value="${ex.weight}" class="series-weight">
+        <input type="${inputType}" ${inputAttrs} placeholder="${escapeHtml(unit)}" id="weight-${s}" value="${escapeHtml(ex.weight)}" class="series-weight">
         <span class="series-x">x</span>
         <input type="number" inputmode="numeric" placeholder="reps" id="rep-${s}" class="series-reps">
       </div>`;
   }
 
   openModal(`
-    <h2>Registrar: ${ex.name}</h2>
+    <h2>Registrar: ${escapeHtml(ex.name)}</h2>
     <div class="form-group">
       <label>Fecha</label>
       <input type="date" id="log-date" value="${todayStr()}">
     </div>
     <div class="form-group">
       <div class="series-header">
-        <span></span><span>Peso (${unit})</span><span></span><span>Reps</span>
+        <span></span><span>Peso (${escapeHtml(unit)})</span><span></span><span>Reps</span>
       </div>
       ${seriesHtml}
     </div>
@@ -606,7 +618,7 @@ function openEditRoutine() {
     <h2>Editar rutina</h2>
     <div class="form-group">
       <label>Nombre</label>
-      <input type="text" id="edit-routine-name" value="${routine.name}">
+      <input type="text" id="edit-routine-name" value="${escapeHtml(routine.name)}">
     </div>
     <button class="btn-primary" onclick="saveEditRoutine()">Guardar</button>
     <button class="btn-secondary" onclick="closeModal()">Cancelar</button>
@@ -639,9 +651,9 @@ function openHistory(exIndex) {
         ${logs.map((log, li) => {
           const realIndex = ex.logs.length - 1 - li;
           const seriesStr = log.reps.join(' - ');
-          const weightStr = log.weights
+          const weightStr = escapeHtml(log.weights
             ? (log.weights.every(w => w === log.weights[0]) ? `${log.weights[0]} ${unit}` : log.weights.map(w => `${w}`).join(' - ') + ` ${unit}`)
-            : `${log.weight} ${unit}`;
+            : `${log.weight} ${unit}`);
           return `
             <div class="history-table-row">
               <span class="history-cell-date">${formatDate(log.date)}</span>
@@ -654,7 +666,7 @@ function openHistory(exIndex) {
     : '<p style="color:var(--text-muted); text-align:center; padding:20px">Sin registros</p>';
 
   openModal(`
-    <h2>&#128203; ${ex.name}</h2>
+    <h2>&#128203; ${escapeHtml(ex.name)}</h2>
     <div class="history-list">${listHtml}</div>
     <button class="btn-secondary" onclick="closeModal()" style="margin-top:16px">Cerrar</button>
     <button class="btn-danger-full" onclick="deleteExercise(${exIndex})">Eliminar ejercicio</button>
@@ -674,11 +686,11 @@ function loadRoutineChart() {
   buildRoutineChart(currentChartType, exIndex);
 }
 
-function switchRoutineChart(type) {
+function switchRoutineChart(type, btn) {
   currentChartType = type;
   const tabs = document.querySelectorAll('#routine-chart-tabs .chart-tab');
   tabs.forEach(t => t.classList.remove('active'));
-  event.target.classList.add('active');
+  btn.classList.add('active');
   const select = document.getElementById('chart-exercise-select');
   const exIndex = parseInt(select.value);
   buildRoutineChart(type, exIndex);
@@ -797,11 +809,135 @@ function deleteLog(exIndex, logIndex) {
   toast('Registro eliminado');
 }
 
-// Reset daily checks
+// Reset daily checks (once per day, on first load)
 function resetDailyChecks() {
   data.routines.forEach(r => r.exercises.forEach(e => e.done = false));
+  data.checksDate = todayStr();
   saveData(data);
-  toast('Checks reseteados');
+}
+
+// ============ REORDER (long press + drag) ============
+const LONG_PRESS_MS = 400;
+const MOVE_TOLERANCE = 8;
+const AUTOSCROLL_EDGE = 80;
+let reorder = null;
+let suppressClick = false;
+
+function initReorder() {
+  const container = document.getElementById('exercises');
+
+  container.addEventListener('pointerdown', e => {
+    const card = e.target.closest('.exercise-card');
+    if (!card || (e.pointerType === 'mouse' && e.button !== 0)) return;
+    reorder = {
+      card,
+      pointerId: e.pointerId,
+      active: false,
+      startX: e.clientX,
+      startY: e.clientY,
+      pageY: e.pageY,
+      timer: setTimeout(startDrag, LONG_PRESS_MS)
+    };
+  });
+
+  container.addEventListener('pointermove', e => {
+    if (!reorder || e.pointerId !== reorder.pointerId) return;
+    reorder.pageY = e.pageY;
+    if (!reorder.active) {
+      // Moving before the long press completes means the user is scrolling
+      if (Math.hypot(e.clientX - reorder.startX, e.clientY - reorder.startY) > MOVE_TOLERANCE) {
+        clearTimeout(reorder.timer);
+        reorder = null;
+      }
+      return;
+    }
+    e.preventDefault();
+    moveDrag(e);
+  });
+
+  container.addEventListener('pointerup', endDrag);
+  container.addEventListener('pointercancel', endDrag);
+
+  // Block page scrolling while a card is being dragged
+  document.addEventListener('touchmove', e => {
+    if (reorder && reorder.active) e.preventDefault();
+  }, { passive: false });
+
+  // Don't trigger the button under the finger when dropping a card
+  container.addEventListener('click', e => {
+    if (suppressClick) {
+      e.stopPropagation();
+      e.preventDefault();
+    }
+  }, true);
+
+  container.addEventListener('contextmenu', e => {
+    if (reorder) e.preventDefault();
+  });
+}
+
+function startDrag() {
+  const r = reorder;
+  if (!r) return;
+  r.active = true;
+  r.startPageY = r.pageY;
+  r.initialTop = r.card.offsetTop;
+  r.card.classList.add('dragging');
+  try { r.card.setPointerCapture(r.pointerId); } catch (_) {}
+  if (navigator.vibrate) navigator.vibrate(30);
+}
+
+function moveDrag(e) {
+  const { card } = reorder;
+  const container = card.parentElement;
+
+  if (e.clientY < AUTOSCROLL_EDGE) window.scrollBy(0, -10);
+  else if (e.clientY > window.innerHeight - AUTOSCROLL_EDGE) window.scrollBy(0, 10);
+
+  const follow = () => {
+    const offset = e.pageY - reorder.startPageY + reorder.initialTop - card.offsetTop;
+    card.style.transform = `translateY(${offset}px)`;
+  };
+  follow();
+
+  const rect = card.getBoundingClientRect();
+  const center = rect.top + rect.height / 2;
+  const middle = el => {
+    const r = el.getBoundingClientRect();
+    return r.top + r.height / 2;
+  };
+  const prev = card.previousElementSibling;
+  const next = card.nextElementSibling;
+
+  if (next && next.classList.contains('exercise-card') && center > middle(next)) {
+    container.insertBefore(next, card);
+    follow();
+  } else if (prev && prev.classList.contains('exercise-card') && center < middle(prev)) {
+    container.insertBefore(card, prev);
+    follow();
+  }
+}
+
+function endDrag(e) {
+  if (!reorder || e.pointerId !== reorder.pointerId) return;
+  const r = reorder;
+  reorder = null;
+  clearTimeout(r.timer);
+  if (!r.active) return;
+
+  r.card.classList.remove('dragging');
+  r.card.style.transform = '';
+  suppressClick = true;
+  setTimeout(() => suppressClick = false, 400);
+
+  const cards = document.querySelectorAll('#exercises .exercise-card');
+  const order = [...cards].map(c => parseInt(c.dataset.index));
+  if (order.every((idx, i) => idx === i)) return;
+
+  const routine = data.routines[data.activeRoutine];
+  routine.exercises = order.map(i => routine.exercises[i]);
+  saveData(data);
+  render();
 }
 
 // ============ TOAST ============
@@ -817,6 +953,8 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('modal-overlay').addEventListener('click', (e) => {
     if (e.target === e.currentTarget) closeModal();
   });
+
+  initReorder();
 
   // Allow login with Enter key
   document.getElementById('login-password').addEventListener('keydown', (e) => {

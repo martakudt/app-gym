@@ -1,0 +1,35 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+    function isAdmin() {
+      return signedIn() && request.auth.token.email == 'martatorresg15@gmail.com';
+    }
+    function isApproved() {
+      return signedIn() &&
+        get(/databases/$(database)/documents/profiles/$(request.auth.uid)).data.approved == true;
+    }
+
+    match /profiles/{userId} {
+      // Cada uno ve su perfil; la admin ve todos (panel de solicitudes)
+      allow read: if signedIn() && (request.auth.uid == userId || isAdmin());
+
+      // Un usuario solo crea su propio perfil, con su email real y como pendiente
+      allow create: if signedIn() && request.auth.uid == userId
+        && request.resource.data.keys().hasOnly(['email', 'approved', 'createdAt'])
+        && request.resource.data.email == request.auth.token.email
+        && (request.resource.data.approved == false || isAdmin());
+
+      // Solo la admin puede aprobar, y solo puede tocar el campo 'approved'
+      allow update: if isAdmin()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['approved']);
+      allow delete: if isAdmin();
+    }
+
+    match /users/{userId} {
+      allow read, write: if signedIn() && request.auth.uid == userId && isApproved();
+    }
+  }
+}
