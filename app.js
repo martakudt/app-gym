@@ -45,7 +45,9 @@ const ICONS = {
   close: svg('<path d="M6 6l12 12M18 6L6 18"/>'),
   dumbbell: svg('<path d="M6 7v10M18 7v10M3 9.5v5M21 9.5v5M6 12h12"/>', 2.2),
   sun: svg('<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>'),
-  moon: svg('<path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/>')
+  moon: svg('<path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/>'),
+  chevronLeft: svg('<path d="M15 6l-6 6 6 6"/>', 2.5),
+  chevronRight: svg('<path d="M9 6l6 6-6 6"/>', 2.5)
 };
 
 // ============ THEME ============
@@ -246,9 +248,11 @@ function listenToUserData() {
     if (doc.exists) {
       data = doc.data();
       if (!data.trash) data.trash = [];
+      if (!data.activities) data.activities = [];
     } else {
       data = JSON.parse(JSON.stringify(DEFAULT_DATA));
       data.trash = [];
+      data.activities = [];
       data.checksDate = todayStr();
       docRef.set(data);
     }
@@ -259,6 +263,7 @@ function listenToUserData() {
     if (!data) {
       data = JSON.parse(JSON.stringify(DEFAULT_DATA));
       data.trash = [];
+      data.activities = [];
       render();
     }
   });
@@ -286,6 +291,25 @@ function render() {
   renderStats();
   renderHeader();
   renderExercises();
+  renderCalendar();
+}
+
+// ============ VIEWS ============
+let currentView = 'routine';
+
+function switchView(view) {
+  currentView = view;
+  document.getElementById('view-routine').hidden = view !== 'routine';
+  document.getElementById('view-calendar').hidden = view !== 'calendar';
+  document.querySelectorAll('.bottom-nav-item').forEach(b => b.classList.toggle('active', b.dataset.view === view));
+  document.getElementById('fab').setAttribute('aria-label', view === 'calendar' ? 'Añadir entreno' : 'Añadir ejercicio');
+  window.scrollTo(0, 0);
+  render();
+}
+
+function onFabClick() {
+  if (currentView === 'calendar') openAddActivity(selectedDate);
+  else openAddExercise();
 }
 
 function renderNav() {
@@ -889,6 +913,245 @@ function deleteLog(exIndex, logIndex) {
   saveData(data);
   openHistory(exIndex);
   toast('Registro eliminado');
+}
+
+// ============ CALENDAR ============
+// Gym days come from exercise logs; other workouts are stored in data.activities
+const ACTIVITY_TYPES = {
+  gym: { label: 'Gym', color: 'var(--act-gym)' },
+  bike: { label: 'Bici', color: 'var(--act-bike)' },
+  hyrox: { label: 'Hyrox', color: 'var(--act-hyrox)' },
+  other: { label: 'Otro', color: 'var(--act-other)' }
+};
+
+const WEEKDAYS = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
+const MONTH_NAMES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+const DAY_NAMES = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
+
+let calendarMonth = null;
+let selectedDate = todayStr();
+let newActivityType = 'bike';
+
+function dateKey(year, month, day) {
+  return `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+}
+
+function activityType(type) {
+  return ACTIVITY_TYPES[type] ? type : 'other';
+}
+
+function getTrainingDays() {
+  const days = new Map();
+  const dayFor = date => {
+    if (!days.has(date)) days.set(date, { types: new Set(), gym: new Map(), activities: [] });
+    return days.get(date);
+  };
+
+  data.routines.forEach(r => r.exercises.forEach(ex => ex.logs.forEach(log => {
+    const day = dayFor(log.date);
+    day.types.add('gym');
+    if (!day.gym.has(r.name)) day.gym.set(r.name, []);
+    day.gym.get(r.name).push(ex.name);
+  })));
+
+  (data.activities || []).forEach((a, index) => {
+    const day = dayFor(a.date);
+    day.types.add(activityType(a.type));
+    day.activities.push({ ...a, index });
+  });
+
+  return days;
+}
+
+// Ring around the day: one color, or one segment per workout with small gaps
+function dayRing(types) {
+  const colors = Object.keys(ACTIVITY_TYPES).filter(t => types.has(t)).map(t => ACTIVITY_TYPES[t].color);
+  if (colors.length === 1) return colors[0];
+  const step = 100 / colors.length;
+  const gap = 2;
+  const segments = colors.map((c, i) =>
+    `transparent ${i * step}% ${i * step + gap / 2}%, ${c} ${i * step + gap / 2}% ${(i + 1) * step - gap / 2}%, transparent ${(i + 1) * step - gap / 2}% ${(i + 1) * step}%`
+  );
+  return `conic-gradient(${segments.join(', ')})`;
+}
+
+function renderCalendar() {
+  const container = document.getElementById('calendar');
+  if (!calendarMonth) {
+    const now = new Date();
+    calendarMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+  }
+  const year = calendarMonth.getFullYear();
+  const month = calendarMonth.getMonth();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const offset = (new Date(year, month, 1).getDay() + 6) % 7;
+  const today = todayStr();
+  const days = getTrainingDays();
+
+  // Month summary: days trained, and days per kind of workout
+  let trained = 0;
+  const counts = {};
+  for (let d = 1; d <= daysInMonth; d++) {
+    const info = days.get(dateKey(year, month, d));
+    if (!info) continue;
+    trained++;
+    info.types.forEach(t => counts[t] = (counts[t] || 0) + 1);
+  }
+  const chips = Object.keys(ACTIVITY_TYPES).filter(t => counts[t]).map(t => `
+    <span class="act-chip"><span class="act-dot" style="background:${ACTIVITY_TYPES[t].color}"></span>${ACTIVITY_TYPES[t].label} <b>${counts[t]}</b></span>
+  `).join('');
+
+  let cells = WEEKDAYS.map(w => `<span class="cal-weekday">${w}</span>`).join('');
+  cells += '<span></span>'.repeat(offset);
+  for (let d = 1; d <= daysInMonth; d++) {
+    const key = dateKey(year, month, d);
+    const info = days.get(key);
+    const classes = ['cal-day'];
+    if (info) classes.push('trained');
+    if (key === today) classes.push('today');
+    if (key === selectedDate) classes.push('selected');
+    if (key > today) classes.push('future');
+    const style = info ? ` style="--ring:${dayRing(info.types)}"` : '';
+    cells += `<button class="${classes.join(' ')}"${style} onclick="selectDay('${key}')">${d}</button>`;
+  }
+
+  const legend = Object.values(ACTIVITY_TYPES).map(t =>
+    `<span><span class="act-dot" style="background:${t.color}"></span>${t.label}</span>`
+  ).join('');
+
+  container.innerHTML = `
+    <div class="calendar-head">
+      <button class="calendar-title" onclick="goToToday()">${MONTH_NAMES[month]} ${year}</button>
+      <div class="calendar-nav">
+        <button class="btn-icon" onclick="changeMonth(-1)" aria-label="Mes anterior">${ICONS.chevronLeft}</button>
+        <button class="btn-icon" onclick="changeMonth(1)" aria-label="Mes siguiente">${ICONS.chevronRight}</button>
+      </div>
+    </div>
+    <div class="month-summary">
+      <div class="month-total"><b>${trained}</b><span>${trained === 1 ? 'día entrenado' : 'días entrenados'}</span></div>
+      <div class="month-chips">${chips || '<span class="day-empty">Aún no hay entrenos este mes</span>'}</div>
+    </div>
+    <div class="calendar-card">
+      <div class="calendar-grid">${cells}</div>
+      <div class="calendar-legend">${legend}</div>
+    </div>
+    ${renderDayDetail(selectedDate, days.get(selectedDate))}
+  `;
+}
+
+function renderDayDetail(date, info) {
+  const [y, m, d] = date.split('-').map(Number);
+  const weekday = DAY_NAMES[new Date(y, m - 1, d).getDay()];
+  const title = `${weekday}, ${d} de ${MONTH_NAMES[m - 1]}`;
+
+  let items = '';
+  if (info) {
+    info.gym.forEach((exercises, routineName) => {
+      items += `
+        <div class="day-item">
+          <span class="act-dot" style="background:${ACTIVITY_TYPES.gym.color}"></span>
+          <div class="day-item-info">
+            <div class="day-item-title">Gym · ${escapeHtml(routineName)}</div>
+            <div class="day-item-sub">${[...new Set(exercises)].map(escapeHtml).join(', ')}</div>
+          </div>
+        </div>`;
+    });
+    info.activities.forEach(a => {
+      const type = ACTIVITY_TYPES[activityType(a.type)];
+      items += `
+        <div class="day-item">
+          <span class="act-dot" style="background:${type.color}"></span>
+          <div class="day-item-info">
+            <div class="day-item-title">${type.label}${a.minutes ? ` · ${escapeHtml(a.minutes)} min` : ''}</div>
+            ${a.notes ? `<div class="day-item-sub">${escapeHtml(a.notes)}</div>` : ''}
+          </div>
+          <button class="history-delete" onclick="deleteActivity(${a.index})" aria-label="Borrar entreno">${ICONS.close}</button>
+        </div>`;
+    });
+  }
+
+  return `
+    <div class="day-detail">
+      <div class="day-detail-title">${title}</div>
+      ${items || '<p class="day-empty">No hay entrenos este día</p>'}
+      <button class="btn-primary" onclick="openAddActivity('${date}')">${ICONS.plus} Añadir entreno</button>
+    </div>`;
+}
+
+function changeMonth(delta) {
+  calendarMonth = new Date(calendarMonth.getFullYear(), calendarMonth.getMonth() + delta, 1);
+  renderCalendar();
+}
+
+function goToToday() {
+  calendarMonth = null;
+  selectedDate = todayStr();
+  renderCalendar();
+}
+
+function selectDay(date) {
+  selectedDate = date;
+  renderCalendar();
+}
+
+function openAddActivity(date) {
+  newActivityType = 'bike';
+  const options = Object.entries(ACTIVITY_TYPES).map(([key, t]) => `
+    <button type="button" class="type-option ${key === newActivityType ? 'active' : ''}" data-type="${key}" onclick="pickActivityType('${key}')">
+      <span class="act-dot" style="background:${t.color}"></span>${t.label}
+    </button>`).join('');
+
+  openModal(`
+    <h2>Añadir entreno</h2>
+    <div class="form-group">
+      <label>Tipo</label>
+      <div class="type-picker">${options}</div>
+    </div>
+    <div class="form-group">
+      <label>Fecha</label>
+      <input type="date" id="activity-date" value="${date || todayStr()}">
+    </div>
+    <div class="form-group">
+      <label>Duración (min)</label>
+      <input type="number" inputmode="numeric" id="activity-minutes" placeholder="Opcional">
+    </div>
+    <div class="form-group">
+      <label>Notas</label>
+      <input type="text" id="activity-notes" placeholder="Ej: 40 km, simulacro Hyrox...">
+    </div>
+    <button class="btn-primary" onclick="saveActivity()">Guardar</button>
+    <button class="btn-secondary" onclick="closeModal()">Cancelar</button>
+  `);
+}
+
+function pickActivityType(key) {
+  newActivityType = key;
+  document.querySelectorAll('.type-option').forEach(b => b.classList.toggle('active', b.dataset.type === key));
+}
+
+function saveActivity() {
+  const date = document.getElementById('activity-date').value || todayStr();
+  const minutes = parseInt(document.getElementById('activity-minutes').value) || null;
+  const notes = document.getElementById('activity-notes').value.trim();
+
+  if (!data.activities) data.activities = [];
+  data.activities.push({ date, type: newActivityType, minutes, notes });
+  data.activities.sort((a, b) => a.date.localeCompare(b.date));
+
+  const [y, m] = date.split('-').map(Number);
+  calendarMonth = new Date(y, m - 1, 1);
+  selectedDate = date;
+  saveData(data);
+  closeModal();
+  toast('Entreno guardado');
+}
+
+function deleteActivity(index) {
+  if (confirm('¿Borrar este entreno?')) {
+    data.activities.splice(index, 1);
+    saveData(data);
+    toast('Entreno borrado');
+  }
 }
 
 // Reset daily checks (once per day, on first load)

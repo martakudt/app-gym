@@ -12,6 +12,8 @@ PWA (Progressive Web App) para registrar rutinas de gimnasio, apuntar cada entre
 - **Registro de entrenos** serie a serie (peso × reps), con fecha editable.
 - **Historial** por ejercicio, con opción de borrar registros sueltos.
 - **Gráficas de progreso** (Chart.js): peso máximo, media de reps por serie y reps totales.
+- **Calendario mensual**: los días entrenados se pintan de color. Los días de gym salen solos a partir de los registros, y se pueden añadir otros entrenos (bici, Hyrox u otro) con duración y notas. Si un día tiene varios, la casilla se divide en colores.
+- **Modo claro y oscuro**: sigue el del móvil hasta que eliges uno con el botón de la barra superior.
 - **Papelera**: los ejercicios eliminados se pueden restaurar (se guardan los últimos 20).
 - **Cuentas de usuario** con email y contraseña (Firebase Auth).
 - **Sistema de aprobación**: las cuentas nuevas quedan pendientes hasta que la administradora las aprueba desde un panel dentro de la app.
@@ -58,6 +60,7 @@ users/{uid}
     }
   ]
   trash: [ { routineIndex, exercise, deletedAt } ]
+  activities: [ { date, type: 'gym' | 'bike' | 'hyrox' | 'other', minutes, notes } ]
 ```
 
 ## Puesta en marcha
@@ -112,7 +115,8 @@ La `apiKey` que aparece en `app.js` **no es un secreto**: Firebase la diseña pa
 3. Añade ejercicios con el botón flotante **+**.
 4. Pulsa **Registrar entreno** en un ejercicio para apuntar las series del día.
 5. Consulta el historial y las gráficas de progreso debajo de los ejercicios.
-6. (Admin) Usa el icono 👥 para aprobar solicitudes pendientes.
+6. En **Calendario** (menú inferior) ve los días entrenados del mes y añade entrenos de bici, Hyrox u otros con el botón **+**.
+7. (Admin) Usa el icono 👥 para aprobar solicitudes pendientes.
 
 ## Licencia
 

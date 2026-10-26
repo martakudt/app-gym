@@ -74,22 +74,40 @@
       </div>
     </nav>
 
-    <!-- Routine tabs -->
-    <div class="routine-tabs" id="routine-tabs"></div>
+    <!-- Routine view -->
+    <main id="view-routine">
+      <!-- Routine tabs -->
+      <div class="routine-tabs" id="routine-tabs"></div>
 
-    <!-- Session progress -->
-    <div id="stats-row"></div>
+      <!-- Session progress -->
+      <div id="stats-row"></div>
 
-    <!-- Routine header -->
-    <div class="routine-header" id="routine-header"></div>
+      <!-- Routine header -->
+      <div class="routine-header" id="routine-header"></div>
 
-    <!-- Exercises grid -->
-    <div class="exercises" id="exercises"></div>
+      <!-- Exercises grid -->
+      <div class="exercises" id="exercises"></div>
+    </main>
 
-    <!-- FAB button -->
-    <button class="fab" onclick="openAddExercise()" aria-label="Añadir ejercicio">
-      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
-    </button>
+    <!-- Calendar view -->
+    <main id="view-calendar" hidden>
+      <div id="calendar"></div>
+    </main>
+
+    <!-- Bottom navigation -->
+    <nav class="bottom-nav">
+      <button class="bottom-nav-item active" data-view="routine" onclick="switchView('routine')">
+        <span class="bottom-nav-icon"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 7v10M18 7v10M3 9.5v5M21 9.5v5M6 12h12"/></svg></span>
+        Rutina
+      </button>
+      <button class="fab" id="fab" onclick="onFabClick()" aria-label="Añadir ejercicio">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+      </button>
+      <button class="bottom-nav-item" data-view="calendar" onclick="switchView('calendar')">
+        <span class="bottom-nav-icon"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/></svg></span>
+        Calendario
+      </button>
+    </nav>
 
     <!-- Modal -->
     <div class="modal-overlay" id="modal-overlay">
