@@ -2,6 +2,8 @@
 
 PWA (Progressive Web App) para registrar rutinas de gimnasio, apuntar cada entreno serie a serie y ver la progresión con gráficas. Los datos se sincronizan en la nube con Firebase y la app funciona también sin conexión.
 
+**👉 App: [gym-marta.netlify.app](https://gym-marta.netlify.app/)**
+
 ## Funcionalidades
 
 - **Rutinas múltiples**: crea, renombra y elimina rutinas (p. ej. "Día A – Pierna", "Día B – Torso").
@@ -33,7 +35,8 @@ PWA (Progressive Web App) para registrar rutinas de gimnasio, apuntar cada entre
 ├── styles.css     # Estilos (tema oscuro, mobile-first)
 ├── sw.js          # Service Worker (caché de assets, excluye llamadas a Firebase)
 ├── manifest.json  # Manifest de la PWA
-└── firestore.rules # Reglas de seguridad de Firestore
+├── firestore.rules # Reglas de seguridad de Firestore
+└── LICENSE        # Licencia MIT
 ```
 
 ## Modelo de datos (Firestore)
@@ -110,3 +113,7 @@ La `apiKey` que aparece en `app.js` **no es un secreto**: Firebase la diseña pa
 4. Pulsa **Registrar entreno** en un ejercicio para apuntar las series del día.
 5. Consulta el historial y las gráficas de progreso debajo de los ejercicios.
 6. (Admin) Usa el icono 👥 para aprobar solicitudes pendientes.
+
+## Licencia
+
+[MIT](LICENSE) © Marta Torres Gómez
