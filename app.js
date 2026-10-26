@@ -47,7 +47,9 @@ const ICONS = {
   sun: svg('<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>'),
   moon: svg('<path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/>'),
   chevronLeft: svg('<path d="M15 6l-6 6 6 6"/>', 2.5),
-  chevronRight: svg('<path d="M9 6l6 6-6 6"/>', 2.5)
+  chevronRight: svg('<path d="M9 6l6 6-6 6"/>', 2.5),
+  arrowUp: svg('<path d="M12 19V5M6 11l6-6 6 6"/>', 2.8),
+  arrowDown: svg('<path d="M12 5v14M6 13l6 6 6-6"/>', 2.8)
 };
 
 // ============ THEME ============
@@ -988,18 +990,21 @@ function renderCalendar() {
   const today = todayStr();
   const days = getTrainingDays();
 
-  // Month summary: days trained, and days per kind of workout
-  let trained = 0;
-  const counts = {};
-  for (let d = 1; d <= daysInMonth; d++) {
-    const info = days.get(dateKey(year, month, d));
-    if (!info) continue;
-    trained++;
-    info.types.forEach(t => counts[t] = (counts[t] || 0) + 1);
+  const stats = monthStats(days, year, month);
+  const trained = stats.trained;
+  const prev = monthStats(days, year, month - 1).trained;
+  const prevName = MONTH_NAMES[(month + 11) % 12];
+  let compare;
+  if (!prev) {
+    compare = `<span class="month-compare-note">Sin entrenos en ${prevName}</span>`;
+  } else {
+    const pct = Math.round((trained - prev) / prev * 100);
+    const trend = pct > 0 ? 'up' : pct < 0 ? 'down' : 'flat';
+    const arrow = pct > 0 ? ICONS.arrowUp : pct < 0 ? ICONS.arrowDown : '';
+    compare = `
+      <span class="trend trend-${trend}">${arrow}${pct > 0 ? '+' : ''}${pct} %</span>
+      <span class="month-compare-note">vs ${prevName} (${prev} ${prev === 1 ? 'día' : 'días'})</span>`;
   }
-  const chips = Object.keys(ACTIVITY_TYPES).filter(t => counts[t]).map(t => `
-    <span class="act-chip"><span class="act-dot" style="background:${ACTIVITY_TYPES[t].color}"></span>${ACTIVITY_TYPES[t].label} <b>${counts[t]}</b></span>
-  `).join('');
 
   let cells = WEEKDAYS.map(w => `<span class="cal-weekday">${w}</span>`).join('');
   cells += '<span></span>'.repeat(offset);
@@ -1029,14 +1034,105 @@ function renderCalendar() {
     </div>
     <div class="month-summary">
       <div class="month-total"><b>${trained}</b><span>${trained === 1 ? 'día entrenado' : 'días entrenados'}</span></div>
-      <div class="month-chips">${chips || '<span class="day-empty">Aún no hay entrenos este mes</span>'}</div>
+      <div class="month-compare">${compare}</div>
     </div>
     <div class="calendar-card">
       <div class="calendar-grid">${cells}</div>
       <div class="calendar-legend">${legend}</div>
     </div>
     ${renderDayDetail(selectedDate, days.get(selectedDate))}
+    ${renderMonthReport(days, year, month, stats)}
   `;
+}
+
+// Days trained in a month, per kind of workout and per gym routine
+function monthStats(days, year, month) {
+  const first = new Date(year, month, 1);
+  year = first.getFullYear();
+  month = first.getMonth();
+  const stats = { trained: 0, types: {}, minutes: {}, routines: new Map() };
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+  for (let d = 1; d <= daysInMonth; d++) {
+    const info = days.get(dateKey(year, month, d));
+    if (!info) continue;
+    stats.trained++;
+    info.types.forEach(t => stats.types[t] = (stats.types[t] || 0) + 1);
+    info.gym.forEach((_, name) => stats.routines.set(name, (stats.routines.get(name) || 0) + 1));
+    // Gym added by hand (no exercises logged that day)
+    if (info.types.has('gym') && !info.gym.size) {
+      stats.routines.set('Gym', (stats.routines.get('Gym') || 0) + 1);
+    }
+    info.activities.forEach(a => {
+      const t = activityType(a.type);
+      stats.minutes[t] = (stats.minutes[t] || 0) + (Number(a.minutes) || 0);
+    });
+  }
+  return stats;
+}
+
+function renderMonthReport(days, year, month, stats) {
+  // One row per routine (in routine order), then the other workouts
+  const routineOrder = data.routines.map(r => r.name);
+  const routineRows = [...stats.routines.entries()]
+    .sort((a, b) => {
+      const ia = routineOrder.indexOf(a[0]);
+      const ib = routineOrder.indexOf(b[0]);
+      return (ia < 0 ? 999 : ia) - (ib < 0 ? 999 : ib);
+    })
+    .map(([name, count]) => ({ name, count, color: ACTIVITY_TYPES.gym.color, minutes: 0 }));
+  const otherRows = Object.keys(ACTIVITY_TYPES)
+    .filter(t => t !== 'gym' && stats.types[t])
+    .map(t => ({ name: ACTIVITY_TYPES[t].label, count: stats.types[t], color: ACTIVITY_TYPES[t].color, minutes: stats.minutes[t] }));
+  const rows = [...routineRows, ...otherRows];
+  const maxCount = Math.max(1, ...rows.map(r => r.count));
+
+  const rowsHtml = rows.map(r => `
+    <div class="report-row">
+      <div class="report-row-head">
+        <span class="report-row-name"><span class="act-dot" style="background:${r.color}"></span>${escapeHtml(r.name)}</span>
+        <span class="report-row-value">${r.count} <small>${r.count === 1 ? 'día' : 'días'}${r.minutes ? ` · ${r.minutes} min` : ''}</small></span>
+      </div>
+      <div class="report-track"><div class="report-bar" style="width:${(r.count / maxCount * 100).toFixed(1)}%;background:${r.color}"></div></div>
+    </div>`).join('');
+
+  // Last 6 months, stacked by kind of workout (a day with two workouts counts twice)
+  const months = [];
+  for (let i = 5; i >= 0; i--) {
+    const date = new Date(year, month - i, 1);
+    months.push({ date, types: monthStats(days, date.getFullYear(), date.getMonth()).types });
+  }
+  const totals = months.map(m => Object.values(m.types).reduce((a, b) => a + b, 0));
+  // Headroom so the tallest column still fits its total above it
+  const maxTotal = Math.max(1, ...totals) * 1.2;
+
+  const columns = months.map((m, i) => {
+    const name = MONTH_NAMES[m.date.getMonth()];
+    const parts = Object.keys(ACTIVITY_TYPES).filter(t => m.types[t]);
+    const segments = parts.map(t =>
+      `<span class="month-col-seg" style="height:calc(${(m.types[t] / maxTotal * 100).toFixed(1)}% - 2px);background:${ACTIVITY_TYPES[t].color}"></span>`
+    ).join('');
+    const detail = parts.map(t => `${ACTIVITY_TYPES[t].label} ${m.types[t]}`).join(', ');
+    const label = `${name} ${m.date.getFullYear()}: ${totals[i]} entrenos${detail ? ` (${detail})` : ''}`;
+    return `
+      <button class="month-col ${i === 5 ? 'current' : ''}" onclick="showMonth(${m.date.getFullYear()}, ${m.date.getMonth()})" title="${label}" aria-label="${label}">
+        <span class="month-col-plot">${segments}<span class="month-col-total">${totals[i] || ''}</span></span>
+        <span class="month-col-label">${name.slice(0, 3)}</span>
+      </button>`;
+  }).join('');
+
+  return `
+    <div class="month-report">
+      <div class="report-title">Resumen de ${MONTH_NAMES[month]}</div>
+      ${rows.length ? `<div class="report-rows">${rowsHtml}</div>` : '<p class="day-empty">Aún no hay entrenos este mes</p>'}
+      <div class="report-subtitle">Entrenos por mes</div>
+      <div class="month-chart">${columns}</div>
+    </div>`;
+}
+
+function showMonth(year, month) {
+  calendarMonth = new Date(year, month, 1);
+  renderCalendar();
 }
 
 function renderDayDetail(date, info) {

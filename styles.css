@@ -37,19 +37,21 @@
   --check-fg: #D4F542;
 
   --danger: #C8372A;
-  --danger-soft: rgba(200, 55, 42, 0.08);
+  --danger-soft: rgba(200, 55, 42, 0.1);
+  --good: #1E8A3C;
+  --good-soft: rgba(30, 138, 60, 0.12);
 
   --chart-line: #121411;
   --chart-fill: rgba(140, 180, 20, 0.28);
   --chart-grid: #E6E9E2;
   --chart-tick: #737A70;
 
-  /* Calendar: one color per kind of workout (dark text on all of them) */
-  --act-gym: #D4F542;
-  --act-bike: #FF8A3D;
-  --act-hyrox: #2CC9A8;
-  --act-other: #A99BFF;
-  --on-act: #121411;
+  /* Calendar & summary: one color per kind of workout. Light steps are darker
+     so rings and bars read on white; validated for colorblind separation */
+  --act-gym: #9EC21A;
+  --act-bike: #D04E1E;
+  --act-hyrox: #0FA08A;
+  --act-other: #9284F2;
 
   --nav-bg: rgba(255, 255, 255, 0.92);
 
@@ -90,12 +92,19 @@
   --check-fg: #121411;
 
   --danger: #FF6B5E;
-  --danger-soft: rgba(255, 107, 94, 0.1);
+  --danger-soft: rgba(255, 107, 94, 0.14);
+  --good: #4ADE80;
+  --good-soft: rgba(74, 222, 128, 0.14);
 
   --chart-line: #D4F542;
   --chart-fill: rgba(212, 245, 66, 0.22);
   --chart-grid: #23271F;
   --chart-tick: #8C9486;
+
+  --act-gym: #D4F542;
+  --act-bike: #FF8A3D;
+  --act-hyrox: #2CC9A8;
+  --act-other: #A99BFF;
 
   --nav-bg: rgba(20, 23, 18, 0.92);
 
@@ -1016,29 +1025,36 @@ select:focus-visible {
   margin-top: 4px;
 }
 
-.month-chips {
+.month-compare {
   display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
   min-width: 0;
 }
 
-.act-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 5px 10px;
-  border-radius: 999px;
-  background: var(--bg-input);
-  font-size: 12px;
+.month-compare-note {
+  font-size: 12.5px;
   font-weight: 700;
-  color: var(--text-secondary);
+  color: var(--text-muted);
 }
 
-.act-chip b {
-  color: var(--text);
+.trend {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 15px;
+  font-weight: 800;
   font-variant-numeric: tabular-nums;
 }
+
+.trend .icon { width: 15px; height: 15px; }
+
+.trend-up { background: var(--good-soft); color: var(--good); }
+.trend-down { background: var(--danger-soft); color: var(--danger); }
+.trend-flat { background: var(--bg-input); color: var(--text-muted); }
 
 .act-dot {
   width: 10px;
@@ -1097,6 +1113,7 @@ select:focus-visible {
 .cal-day:active { transform: scale(0.92); }
 .cal-day.future { color: var(--text-muted); }
 .cal-day.trained { font-weight: 800; }
+.cal-day.selected.trained { color: var(--tab-active-fg); }
 
 .cal-day.trained::before {
   content: '';
@@ -1201,6 +1218,147 @@ select:focus-visible {
 }
 
 .day-detail .btn-primary .icon { width: 18px; height: 18px; }
+
+/* Month report: bars per routine / workout, and last 6 months */
+.month-report {
+  margin: 12px 16px 0;
+  padding: 16px;
+  border-radius: var(--radius-lg);
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.report-title {
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.report-title::first-letter { text-transform: uppercase; }
+
+.report-subtitle {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-top: 6px;
+}
+
+.report-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.report-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.report-row-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 13.5px;
+  font-weight: 800;
+}
+
+.report-row-name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.report-row-value {
+  flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.report-row-value small {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.report-track {
+  height: 8px;
+  border-radius: 4px;
+  background: var(--bg-input);
+  overflow: hidden;
+}
+
+.report-bar {
+  height: 100%;
+  border-radius: 4px;
+  min-width: 8px;
+}
+
+.month-chart {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 8px;
+  height: 160px;
+}
+
+.month-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  height: 100%;
+  background: none;
+  border: none;
+  color: var(--text);
+  cursor: pointer;
+  padding: 0;
+}
+
+.month-col-plot {
+  flex: 1;
+  width: 100%;
+  max-width: 34px;
+  display: flex;
+  flex-direction: column-reverse;
+  gap: 2px;
+  border-bottom: 2px solid var(--border);
+  padding-bottom: 2px;
+}
+
+.month-col-seg {
+  width: 100%;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+
+.month-col-total {
+  font-size: 12px;
+  font-weight: 800;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  padding-bottom: 2px;
+}
+
+.month-col-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+
+.month-col.current .month-col-label {
+  color: var(--text);
+  font-weight: 800;
+}
+
+.month-col:not(.current) .month-col-seg { opacity: 0.55; }
 
 /* Add workout: type picker */
 .type-picker {
