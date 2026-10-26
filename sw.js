@@ -1,9 +1,11 @@
-const CACHE_NAME = 'gym-app-v8';
+const CACHE_NAME = 'gym-app-v9';
 const ASSETS = [
   './index.html',
   './styles.css',
   './app.js',
-  './manifest.json'
+  './manifest.json',
+  './icon.svg',
+  './icon-192.png'
 ];
 
 self.addEventListener('install', e => {

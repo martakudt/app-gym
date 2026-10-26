@@ -162,14 +162,7 @@ select:focus-visible {
 .nav-logo {
   width: 34px;
   height: 34px;
-  background: var(--lime);
-  color: var(--on-lime);
-  border-radius: 11px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 800;
-  font-size: 17px;
+  display: block;
 }
 
 .nav-title {
@@ -1471,6 +1464,14 @@ select:focus-visible {
 }
 
 .login-logo .icon { width: 30px; height: 30px; }
+
+/* The app logo carries its own tile and corners */
+img.login-logo {
+  width: 80px;
+  height: 80px;
+  background: none;
+  display: block;
+}
 
 .login-title {
   font-size: 28px;

@@ -1,6 +1,8 @@
-# 🏋️ GymTracker
+<img src="icon.svg" width="72" alt="Logo de Tutti Sport">
 
-PWA (Progressive Web App) para registrar rutinas de gimnasio, apuntar cada entreno serie a serie y ver la progresión con gráficas. Los datos se sincronizan en la nube con Firebase y la app funciona también sin conexión.
+# Tutti Sport
+
+PWA (Progressive Web App) para registrar entrenos: rutinas de gimnasio serie a serie con gráficas de progresión, y también bici, Hyrox u otros deportes en un calendario mensual. Los datos se sincronizan en la nube con Firebase y la app funciona también sin conexión.
 
 **👉 App: [gym-marta.netlify.app](https://gym-marta.netlify.app/)**
 
@@ -37,6 +39,8 @@ PWA (Progressive Web App) para registrar rutinas de gimnasio, apuntar cada entre
 ├── styles.css     # Estilos (tema claro/oscuro automático, mobile-first)
 ├── sw.js          # Service Worker (caché de assets, excluye llamadas a Firebase)
 ├── manifest.json  # Manifest de la PWA
+├── icon.svg       # Logo (rodaja de lima) e icono de la pestaña
+├── icon-*.png     # Iconos de la app para iPhone (180) y Android (192, 512)
 ├── firestore.rules # Reglas de seguridad de Firestore
 └── LICENSE        # Licencia MIT
 ```
