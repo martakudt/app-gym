@@ -28,6 +28,53 @@ const DEFAULT_DATA = {
 
 const ADMIN_EMAIL = 'martatorresg15@gmail.com';
 
+// ============ ICONS ============
+const svg = (body, width = 2) =>
+  `<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${width}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${body}</svg>`;
+
+const ICONS = {
+  check: svg('<path d="M5 12.5l4.5 4.5L19 7.5"/>', 3),
+  plus: svg('<path d="M12 5v14M5 12h14"/>', 2.5),
+  trophy: svg('<path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0V4zM7 6H4a3 3 0 0 0 3 4M17 6h3a3 3 0 0 1-3 4"/>', 2.5),
+  edit: svg('<path d="M4 20h4L19 9l-4-4L4 16v4zM13.5 6.5l4 4"/>'),
+  trash: svg('<path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/>'),
+  restore: svg('<path d="M3 12a9 9 0 1 0 3-6.7L3 8M3 3v5h5"/>'),
+  history: svg('<path d="M3 12a9 9 0 1 0 3-6.7L3 8M3 3v5h5M12 7v5l3 2"/>'),
+  chart: svg('<path d="M4 20V4M4 20h16M8 15l4-4 3 3 5-6"/>'),
+  users: svg('<circle cx="9" cy="8" r="4"/><path d="M2 21c1-4 3.5-6 7-6s6 2 7 6M16 4a4 4 0 0 1 0 8M22 21c-.5-2.5-2-4.5-4-5.5"/>'),
+  close: svg('<path d="M6 6l12 12M18 6L6 18"/>'),
+  dumbbell: svg('<path d="M6 7v10M18 7v10M3 9.5v5M21 9.5v5M6 12h12"/>', 2.2),
+  sun: svg('<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>'),
+  moon: svg('<path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/>')
+};
+
+// ============ THEME ============
+// The initial theme is applied in index.html; a choice made here is remembered
+const darkQuery = window.matchMedia('(prefers-color-scheme: dark)');
+
+function getSavedTheme() {
+  try { return localStorage.getItem('theme'); } catch (_) { return null; }
+}
+
+function applyTheme(theme) {
+  document.documentElement.dataset.theme = theme;
+  document.getElementById('theme-color').content = theme === 'dark' ? '#0F110E' : '#EEF0EC';
+  const btn = document.getElementById('theme-toggle');
+  if (btn) {
+    const label = theme === 'dark' ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro';
+    btn.innerHTML = theme === 'dark' ? ICONS.sun : ICONS.moon;
+    btn.title = label;
+    btn.setAttribute('aria-label', label);
+  }
+  render();
+}
+
+function toggleTheme() {
+  const next = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+  try { localStorage.setItem('theme', next); } catch (_) {}
+  applyTheme(next);
+}
+
 let data = null;
 let currentUser = null;
 let isAdmin = false;
@@ -51,9 +98,9 @@ function handleLogin() {
     .catch(err => {
       const messages = {
         'auth/user-not-found': 'No existe una cuenta con ese email',
-        'auth/wrong-password': 'Contrasena incorrecta',
-        'auth/invalid-email': 'Email no valido',
-        'auth/invalid-credential': 'Email o contrasena incorrectos',
+        'auth/wrong-password': 'Contraseña incorrecta',
+        'auth/invalid-email': 'Email no válido',
+        'auth/invalid-credential': 'Email o contraseña incorrectos',
         'auth/too-many-requests': 'Demasiados intentos, espera un momento'
       };
       errorEl.textContent = messages[err.code] || 'Error: ' + err.message;
@@ -72,7 +119,7 @@ function handleRegister() {
   }
 
   if (password.length < 6) {
-    errorEl.textContent = 'La contrasena debe tener al menos 6 caracteres';
+    errorEl.textContent = 'La contraseña debe tener al menos 6 caracteres';
     return;
   }
 
@@ -90,15 +137,15 @@ function handleRegister() {
     .catch(err => {
       const messages = {
         'auth/email-already-in-use': 'Ya existe una cuenta con ese email',
-        'auth/invalid-email': 'Email no valido',
-        'auth/weak-password': 'La contrasena es muy debil (min 6 caracteres)'
+        'auth/invalid-email': 'Email no válido',
+        'auth/weak-password': 'La contraseña es muy débil (mín. 6 caracteres)'
       };
       errorEl.textContent = messages[err.code] || 'Error: ' + err.message;
     });
 }
 
 function handleLogout() {
-  if (confirm('Cerrar sesion?')) {
+  if (confirm('¿Cerrar sesión?')) {
     if (unsubscribeData) unsubscribeData();
     if (unsubscribeProfile) unsubscribeProfile();
     auth.signOut();
@@ -158,7 +205,7 @@ function openAdminPanel() {
   db.collection('profiles').where('approved', '==', false).get().then(snapshot => {
     let listHtml = '';
     if (snapshot.empty) {
-      listHtml = '<p style="color:var(--text-muted);text-align:center;padding:20px">No hay solicitudes pendientes</p>';
+      listHtml = '<p class="empty-list">No hay solicitudes pendientes</p>';
     } else {
       snapshot.forEach(doc => {
         const p = doc.data();
@@ -166,9 +213,9 @@ function openAdminPanel() {
           <div class="history-item">
             <div>
               <div class="history-date">${escapeHtml(p.email)}</div>
-              <div style="font-size:12px;color:var(--text-muted)">Registro: ${escapeHtml(p.createdAt || '?')}</div>
+              <div class="history-sub">Registro: ${escapeHtml(p.createdAt || '?')}</div>
             </div>
-            <button class="btn-small btn-history" onclick="approveUser('${doc.id}')">Aprobar</button>
+            <button class="btn-small" onclick="approveUser('${doc.id}')">Aprobar</button>
           </div>`;
       });
     }
@@ -247,32 +294,42 @@ function renderNav() {
     const label = escapeHtml(r.name.split(' ').slice(0, 2).join(' '));
     return `<button class="nav-tab ${i === data.activeRoutine ? 'active' : ''}" onclick="switchTab(${i})">${label}</button>`;
   }).join('');
-  html += `<button class="nav-tab nav-tab-add" onclick="openAddRoutine()">+</button>`;
+  html += `<button class="nav-tab nav-tab-add" onclick="openAddRoutine()" aria-label="Nueva rutina">${ICONS.plus}</button>`;
   container.innerHTML = html;
 }
 
+const RING_LENGTH = 2 * Math.PI * 27;
+
 function renderStats() {
   const s = getStats();
-  document.getElementById('stats-row').innerHTML = `
-    <div class="stat-card">
-      <div class="stat-label">Ejercicios</div>
-      <div class="stat-value">${s.total}</div>
-      <div class="stat-sub">total</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-label">Completados</div>
-      <div class="stat-value">${s.done}</div>
-      <div class="stat-sub">hoy</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-label">Progreso</div>
-      <div class="stat-value">${s.pct}%</div>
-      <div class="stat-sub">sesion</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-label">Registros</div>
-      <div class="stat-value">${s.totalLogs}</div>
-      <div class="stat-sub">historial</div>
+  const container = document.getElementById('stats-row');
+  if (!s.total) {
+    container.innerHTML = '';
+    return;
+  }
+  const left = s.total - s.done;
+  let title = 'A por ello';
+  if (s.done === s.total) title = '¡Rutina completada!';
+  else if (s.done * 2 === s.total) title = 'Vas por la mitad';
+  else if (s.done * 2 > s.total) title = 'Ya casi está';
+  else if (s.done > 0) title = 'Buen comienzo';
+  const sub = left === 0
+    ? 'Todo registrado por hoy'
+    : `Te ${left === 1 ? 'queda 1 ejercicio' : `quedan ${left} ejercicios`} de hoy`;
+
+  container.innerHTML = `
+    <div class="progress-card">
+      <svg class="progress-ring" viewBox="0 0 64 64" aria-hidden="true">
+        <circle class="ring-track" cx="32" cy="32" r="27"/>
+        <circle class="ring-bar" cx="32" cy="32" r="27" transform="rotate(-90 32 32)"
+          stroke-dasharray="${RING_LENGTH.toFixed(1)}" stroke-dashoffset="${(RING_LENGTH * (1 - s.done / s.total)).toFixed(1)}"/>
+        <text x="32" y="37" text-anchor="middle">${s.done}/${s.total}</text>
+      </svg>
+      <div class="progress-text">
+        <span class="progress-title">${title}</span>
+        <span class="progress-sub">${sub}</span>
+        <span class="progress-sub">${s.totalLogs} registros en esta rutina</span>
+      </div>
     </div>
   `;
 }
@@ -282,10 +339,10 @@ function renderHeader() {
   document.getElementById('routine-header').innerHTML = `
     <span class="routine-title">${escapeHtml(routine.name)}</span>
     <div class="routine-actions">
-      ${isAdmin ? `<button class="btn-icon admin-btn" onclick="openAdminPanel()">&#128101;</button>` : ''}
-      <button class="btn-icon" onclick="openTrash()">&#9851;</button>
-      <button class="btn-icon" onclick="openEditRoutine()">&#9998;</button>
-      ${data.routines.length > 1 ? `<button class="btn-icon danger" onclick="deleteRoutine()">&#128465;</button>` : ''}
+      ${isAdmin ? `<button class="btn-icon" onclick="openAdminPanel()" aria-label="Solicitudes pendientes">${ICONS.users}</button>` : ''}
+      <button class="btn-icon" onclick="openTrash()" aria-label="Papelera">${ICONS.restore}</button>
+      <button class="btn-icon" onclick="openEditRoutine()" aria-label="Editar rutina">${ICONS.edit}</button>
+      ${data.routines.length > 1 ? `<button class="btn-icon danger" onclick="deleteRoutine()" aria-label="Eliminar rutina">${ICONS.trash}</button>` : ''}
     </div>
   `;
 }
@@ -297,9 +354,9 @@ function renderExercises() {
   if (!routine.exercises.length) {
     container.innerHTML = `
       <div class="empty-state">
-        <span>&#127947;</span>
-        <p>No hay ejercicios todavia</p>
-        <p style="font-size:13px; margin-top:8px">Pulsa + para anadir uno</p>
+        <div class="empty-icon">${ICONS.dumbbell}</div>
+        <strong>No hay ejercicios todavía</strong>
+        <p>Pulsa + para añadir uno</p>
       </div>`;
     return;
   }
@@ -310,25 +367,28 @@ function renderExercises() {
     return `
       <div class="exercise-card ${ex.done ? 'done' : ''}" data-index="${i}">
         <div class="exercise-top">
-          <button class="exercise-check" onclick="toggleDone(${i})">${ex.done ? '&#10003;' : ''}</button>
+          <button class="exercise-check" onclick="toggleDone(${i})" aria-label="Marcar como hecho">${ICONS.check}</button>
           <div class="exercise-info">
-            <div class="exercise-name">${escapeHtml(ex.name)}</div>
-            <div class="exercise-meta">
-              ${escapeHtml(ex.sets)}s x ${escapeHtml(ex.reps)}
-              <span class="exercise-weight">${escapeHtml(ex.weight)} ${escapeHtml(unit)}</span>
+            <div class="exercise-name">
+              ${escapeHtml(ex.name)}
+              ${isPersonalRecord(ex) ? `<span class="pr-badge">${ICONS.trophy}RÉCORD</span>` : ''}
             </div>
-            ${lastLog ? `
-              <div class="last-log">
-                <span class="last-log-date">&#128205; ${formatDate(lastLog.date)}</span>
-                &rarr; ${formatLogDetail(lastLog, unit)}
-              </div>
-            ` : ''}
-            <div class="exercise-actions">
-              <button class="btn-full btn-history" onclick="openHistory(${i})">&#128203; Ver historial</button>
-            </div>
+            <div class="exercise-meta">${escapeHtml(ex.sets)} series · ${escapeHtml(ex.reps)} reps</div>
           </div>
+          <div class="exercise-weight"><b>${escapeHtml(ex.weight)}</b><small>${escapeHtml(unit)}</small></div>
         </div>
-        <button class="btn-log" onclick="openLogModal(${i})">+ Registrar entreno</button>
+        ${lastLog ? `
+          <div class="last-log">
+            <span class="last-log-date">Último · ${formatShortDate(lastLog.date)}</span>
+            <span class="last-log-reps">${formatLogDetail(lastLog, unit)}</span>
+          </div>
+        ` : ''}
+        <div class="exercise-actions">
+          <button class="btn-log" onclick="openLogModal(${i})">
+            ${ex.done ? `${ICONS.check} Registrar otra vez` : `${ICONS.plus} Registrar entreno`}
+          </button>
+          <button class="btn-history" onclick="openHistory(${i})" aria-label="Ver historial">${ICONS.history}</button>
+        </div>
       </div>`;
   }).join('');
 
@@ -340,7 +400,7 @@ function renderExercises() {
     ).join('');
     exercisesHtml += `
       <div class="chart-section">
-        <h3 class="chart-section-title">&#128200; Graficas de progreso</h3>
+        <h3 class="chart-section-title">${ICONS.chart} Gráficas de progreso</h3>
         <select class="chart-exercise-select" id="chart-exercise-select" onchange="loadRoutineChart()">
           ${options}
         </select>
@@ -368,12 +428,26 @@ function formatLogDetail(log, unit) {
   if (log.weights) {
     const allSame = log.weights.every(w => w === log.weights[0]);
     if (allSame) {
-      return `${escapeHtml(log.weights[0])} ${unit} | <span class="last-log-reps">${log.reps.join(' - ')}</span>`;
+      return `${escapeHtml(log.weights[0])} ${unit} × ${log.reps.join(' · ')}`;
     }
-    const parts = log.weights.map((w, i) => `${escapeHtml(w)}x${log.reps[i]}`);
-    return `<span class="last-log-reps">${parts.join(' - ')}</span> ${unit}`;
+    const parts = log.weights.map((w, i) => `${escapeHtml(w)}×${log.reps[i]}`);
+    return `${parts.join(' · ')} ${unit}`;
   }
-  return `${escapeHtml(log.weight)} ${unit} | <span class="last-log-reps">${log.reps.join(' - ')}</span>`;
+  return `${escapeHtml(log.weight)} ${unit} × ${log.reps.join(' · ')}`;
+}
+
+function logMaxWeight(log) {
+  if (log.weights) return Math.max(...log.weights.map(Number));
+  return Number(log.weight);
+}
+
+// The latest log beats every earlier one on max weight
+function isPersonalRecord(ex) {
+  const unit = ex.unit || 'kg';
+  if ((unit !== 'kg' && unit !== 'bloques') || ex.logs.length < 2) return false;
+  const last = logMaxWeight(ex.logs[ex.logs.length - 1]);
+  const best = Math.max(...ex.logs.slice(0, -1).map(logMaxWeight));
+  return last > best;
 }
 
 function escapeHtml(value) {
@@ -388,6 +462,14 @@ function escapeHtml(value) {
 function formatDate(dateStr) {
   const [y, m, d] = dateStr.split('-');
   return `${d}/${m}/${y}`;
+}
+
+const MONTHS = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+
+function formatShortDate(dateStr) {
+  const [y, m, d] = dateStr.split('-');
+  const label = `${parseInt(d)} ${MONTHS[parseInt(m) - 1]}`;
+  return parseInt(y) === new Date().getFullYear() ? label : `${label} ${y}`;
 }
 
 function todayStr() {
@@ -407,7 +489,7 @@ function toggleDone(i) {
 }
 
 function deleteExercise(i) {
-  if (confirm('Eliminar este ejercicio?')) {
+  if (confirm('¿Eliminar este ejercicio?')) {
     const removed = data.routines[data.activeRoutine].exercises.splice(i, 1)[0];
     if (!data.trash) data.trash = [];
     data.trash.push({ routineIndex: data.activeRoutine, exercise: removed, deletedAt: todayStr() });
@@ -426,15 +508,15 @@ function openTrash() {
           <div class="history-item">
             <div>
               <div class="history-date">${escapeHtml(t.exercise.name)}</div>
-              <div style="font-size:12px;color:var(--text-muted)">Eliminado: ${t.deletedAt}</div>
+              <div class="history-sub">Eliminado: ${formatShortDate(t.deletedAt)}</div>
             </div>
-            <button class="btn-small btn-history" onclick="restoreExercise(${realIndex})">Restaurar</button>
+            <button class="btn-small" onclick="restoreExercise(${realIndex})">Restaurar</button>
           </div>`;
       }).join('')
-    : '<p style="color:var(--text-muted);text-align:center;padding:20px">Papelera vacia</p>';
+    : '<p class="empty-list">La papelera está vacía</p>';
 
   openModal(`
-    <h2>&#128465; Papelera</h2>
+    <h2>Papelera</h2>
     <div class="history-list">${listHtml}</div>
     <button class="btn-secondary" onclick="closeModal()" style="margin-top:16px">Cerrar</button>
   `);
@@ -450,7 +532,7 @@ function restoreExercise(trashIndex) {
 }
 
 function deleteRoutine() {
-  if (confirm(`Eliminar "${data.routines[data.activeRoutine].name}"?`)) {
+  if (confirm(`¿Eliminar "${data.routines[data.activeRoutine].name}"?`)) {
     data.routines.splice(data.activeRoutine, 1);
     data.activeRoutine = 0;
     saveData(data);
@@ -482,7 +564,7 @@ function openLogModal(exIndex) {
       <div class="series-row">
         <span class="series-label">Serie ${s + 1}</span>
         <input type="${inputType}" ${inputAttrs} placeholder="${escapeHtml(unit)}" id="weight-${s}" value="${escapeHtml(ex.weight)}" class="series-weight">
-        <span class="series-x">x</span>
+        <span class="series-x">×</span>
         <input type="number" inputmode="numeric" placeholder="reps" id="rep-${s}" class="series-reps">
       </div>`;
   }
@@ -544,7 +626,7 @@ function openAddExercise() {
       <input type="text" id="new-ex-name" placeholder="Ej: Press Banca">
     </div>
     <div class="form-group">
-      <label>Numero de series</label>
+      <label>Número de series</label>
       <input type="number" inputmode="numeric" id="new-ex-sets" value="3">
     </div>
     <div class="form-group">
@@ -563,7 +645,7 @@ function openAddExercise() {
       <label>Peso / Carga inicial</label>
       <input type="text" inputmode="decimal" id="new-ex-weight" value="0">
     </div>
-    <button class="btn-primary" onclick="saveNewExercise()">Anadir</button>
+    <button class="btn-primary" onclick="saveNewExercise()">Añadir</button>
     <button class="btn-secondary" onclick="closeModal()">Cancelar</button>
   `);
 }
@@ -586,7 +668,7 @@ function saveNewExercise() {
   });
   saveData(data);
   closeModal();
-  toast('Ejercicio anadido');
+  toast('Ejercicio añadido');
 }
 
 // Add / Edit routine
@@ -595,7 +677,7 @@ function openAddRoutine() {
     <h2>Nueva rutina</h2>
     <div class="form-group">
       <label>Nombre de la rutina</label>
-      <input type="text" id="new-routine-name" placeholder="Ej: DIA D - CARDIO">
+      <input type="text" id="new-routine-name" placeholder="Ej: Día D - Cardio">
     </div>
     <button class="btn-primary" onclick="saveNewRoutine()">Crear</button>
     <button class="btn-secondary" onclick="closeModal()">Cancelar</button>
@@ -659,14 +741,14 @@ function openHistory(exIndex) {
               <span class="history-cell-date">${formatDate(log.date)}</span>
               <span class="history-cell-series">${seriesStr}</span>
               <span class="history-cell-weight">${weightStr}</span>
-              <button class="history-delete" onclick="deleteLog(${exIndex}, ${realIndex})">x</button>
+              <button class="history-delete" onclick="deleteLog(${exIndex}, ${realIndex})" aria-label="Borrar registro">${ICONS.close}</button>
             </div>`;
         }).join('')}
       </div>`
-    : '<p style="color:var(--text-muted); text-align:center; padding:20px">Sin registros</p>';
+    : '<p class="empty-list">Sin registros todavía</p>';
 
   openModal(`
-    <h2>&#128203; ${escapeHtml(ex.name)}</h2>
+    <h2>${escapeHtml(ex.name)}</h2>
     <div class="history-list">${listHtml}</div>
     <button class="btn-secondary" onclick="closeModal()" style="margin-top:16px">Cerrar</button>
     <button class="btn-danger-full" onclick="deleteExercise(${exIndex})">Eliminar ejercicio</button>
@@ -703,10 +785,7 @@ function buildRoutineChart(type, exIndex) {
   const isNumeric = (unit === 'kg' || unit === 'bloques');
   const chartLogs = [...ex.logs];
   const labels = chartLogs.map(l => formatDate(l.date));
-  const weights = isNumeric ? chartLogs.map(l => {
-    if (l.weights) return Math.max(...l.weights.map(Number));
-    return Number(l.weight);
-  }) : [];
+  const weights = isNumeric ? chartLogs.map(logMaxWeight) : [];
   const avgReps = chartLogs.map(l => {
     const sum = l.reps.reduce((a, b) => a + b, 0);
     return +(sum / l.reps.length).toFixed(1);
@@ -722,25 +801,19 @@ function buildChart(type, labels, weights, avgReps, totalReps, unit, isNumeric) 
   if (!ctx) return;
 
   const configs = {
-    weight: {
-      data: weights,
-      label: `Peso (${unit})`,
-      color: '#3b82f6',
-      bg: 'rgba(59, 130, 246, 0.1)'
-    },
-    reps: {
-      data: avgReps,
-      label: 'Reps media por serie',
-      color: '#10b981',
-      bg: 'rgba(16, 185, 129, 0.1)'
-    },
-    volume: {
-      data: totalReps,
-      label: 'Reps totales',
-      color: '#f59e0b',
-      bg: 'rgba(245, 158, 11, 0.1)'
-    }
+    weight: { data: weights, label: `Peso (${unit})` },
+    reps: { data: avgReps, label: 'Reps media por serie' },
+    volume: { data: totalReps, label: 'Reps totales' }
   };
+
+  // Chart colors come from the CSS theme tokens (light / dark)
+  const css = getComputedStyle(document.documentElement);
+  const token = name => css.getPropertyValue(name).trim();
+  const lineColor = token('--chart-line');
+  const fillColor = token('--chart-fill');
+  const gridColor = token('--chart-grid');
+  const tickColor = token('--chart-tick');
+  const font = { family: token('--font'), size: 10, weight: '600' };
 
   if (type === 'weight' && !isNumeric) {
     type = 'reps';
@@ -758,14 +831,21 @@ function buildChart(type, labels, weights, avgReps, totalReps, unit, isNumeric) 
       datasets: [{
         label: cfg.label,
         data: cfg.data,
-        borderColor: cfg.color,
-        backgroundColor: cfg.bg,
+        borderColor: lineColor,
+        backgroundColor: context => {
+          const { ctx: c, chartArea } = context.chart;
+          if (!chartArea) return fillColor;
+          const gradient = c.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
+          gradient.addColorStop(0, fillColor);
+          gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
+          return gradient;
+        },
         borderWidth: 2.5,
-        pointBackgroundColor: cfg.color,
-        pointBorderColor: '#111827',
+        pointBackgroundColor: lineColor,
+        pointBorderColor: token('--bg-card'),
         pointBorderWidth: 2,
-        pointRadius: 5,
-        pointHoverRadius: 7,
+        pointRadius: 4,
+        pointHoverRadius: 6,
         fill: true,
         tension: 0.3
       }]
@@ -776,24 +856,26 @@ function buildChart(type, labels, weights, avgReps, totalReps, unit, isNumeric) 
       plugins: {
         legend: { display: false },
         tooltip: {
-          backgroundColor: '#1e2a3a',
-          titleColor: '#94a3b8',
-          bodyColor: '#f1f5f9',
-          borderColor: '#263245',
-          borderWidth: 1,
-          cornerRadius: 8,
+          backgroundColor: token('--tab-active-bg'),
+          titleColor: token('--tab-active-fg'),
+          bodyColor: token('--tab-active-fg'),
+          cornerRadius: 10,
           padding: 10,
-          bodyFont: { weight: '700', size: 14 }
+          displayColors: false,
+          titleFont: { family: font.family, weight: '600', size: 11 },
+          bodyFont: { family: font.family, weight: '800', size: 14 }
         }
       },
       scales: {
         x: {
-          ticks: { color: '#475569', font: { size: 10 } },
-          grid: { color: 'rgba(30, 42, 58, 0.5)' }
+          ticks: { color: tickColor, font },
+          grid: { display: false },
+          border: { display: false }
         },
         y: {
-          ticks: { color: '#475569', font: { size: 10 } },
-          grid: { color: 'rgba(30, 42, 58, 0.5)' },
+          ticks: { color: tickColor, font },
+          grid: { color: gridColor },
+          border: { display: false },
           beginAtZero: false
         }
       }
@@ -955,6 +1037,13 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   initReorder();
+
+  applyTheme(document.documentElement.dataset.theme);
+
+  // Follow the phone's light/dark switch until a theme is chosen in the app
+  darkQuery.addEventListener('change', e => {
+    if (!getSavedTheme()) applyTheme(e.matches ? 'dark' : 'light');
+  });
 
   // Allow login with Enter key
   document.getElementById('login-password').addEventListener('keydown', (e) => {

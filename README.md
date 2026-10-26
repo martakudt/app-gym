@@ -32,7 +32,7 @@ PWA (Progressive Web App) para registrar rutinas de gimnasio, apuntar cada entre
 ```
 ├── index.html     # Estructura: login, pantalla de pendiente y app
 ├── app.js         # Lógica: auth, Firestore, render, modales y gráficas
-├── styles.css     # Estilos (tema oscuro, mobile-first)
+├── styles.css     # Estilos (tema claro/oscuro automático, mobile-first)
 ├── sw.js          # Service Worker (caché de assets, excluye llamadas a Firebase)
 ├── manifest.json  # Manifest de la PWA
 ├── firestore.rules # Reglas de seguridad de Firestore
