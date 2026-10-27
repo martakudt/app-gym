@@ -26,7 +26,8 @@ const DEFAULT_DATA = {
   ]
 };
 
-const ADMIN_EMAIL = 'martatorresg15@gmail.com';
+// Firebase Auth UID of the admin account (Authentication → Users in the console)
+const ADMIN_UID = 'KjJFuMulvwbaoySNw715VNgPC5J2';
 
 // ============ ICONS ============
 const svg = (body, width = 2) =>
@@ -131,7 +132,7 @@ function handleRegister() {
     .then(cred => {
       // Create profile as pending (admin is auto-approved)
       const userEmail = cred.user.email;
-      const approved = userEmail === ADMIN_EMAIL;
+      const approved = cred.user.uid === ADMIN_UID;
       return db.collection('profiles').doc(cred.user.uid).set({
         email: userEmail,
         approved: approved,
@@ -160,7 +161,7 @@ function handleLogout() {
 auth.onAuthStateChanged(user => {
   if (user) {
     currentUser = user;
-    isAdmin = user.email === ADMIN_EMAIL;
+    isAdmin = user.uid === ADMIN_UID;
     document.getElementById('login-screen').style.display = 'none';
     checkApproval();
   } else {
@@ -181,7 +182,7 @@ function checkApproval() {
   unsubscribeProfile = profileRef.onSnapshot(doc => {
     if (!doc.exists) {
       // Profile doesn't exist yet (old user or admin) - create it
-      const approved = currentUser.email === ADMIN_EMAIL;
+      const approved = currentUser.uid === ADMIN_UID;
       profileRef.set({
         email: currentUser.email,
         approved: approved,

@@ -75,11 +75,11 @@ users/{uid}
 2. Activa **Authentication → Email/Password**.
 3. Crea una base de datos **Cloud Firestore**.
 4. Registra una app web y copia su configuración en `firebaseConfig`, al principio de [app.js](app.js).
-5. Cambia `ADMIN_EMAIL` en [app.js](app.js) por el email de la cuenta administradora.
+5. Crea la cuenta administradora desde la app, copia su **UID** (en **Authentication → Usuarios** de la consola) y ponlo en `ADMIN_UID`, al principio de [app.js](app.js).
 
 ### 2. Reglas de seguridad de Firestore
 
-La comprobación de "cuenta aprobada" y de "admin" se hace en el navegador, así que **la seguridad real depende de las reglas de Firestore**. Las reglas están en [firestore.rules](firestore.rules); cópialas en **Firestore → Reglas** de la consola (cambiando el email de la admin) y publícalas. Garantizan que:
+La comprobación de "cuenta aprobada" y de "admin" se hace en el navegador, así que **la seguridad real depende de las reglas de Firestore**. Las reglas están en [firestore.rules](firestore.rules); cópialas en **Firestore → Reglas** de la consola (cambiando el UID de la admin por el tuyo) y publícalas. Garantizan que:
 
 - Cada usuario solo puede leer y escribir sus propios datos, y solo si está aprobado.
 - Un usuario nuevo solo puede crear su perfil como pendiente y con su email real.
