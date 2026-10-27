@@ -6,6 +6,16 @@ PWA (Progressive Web App) para registrar entrenos: rutinas de gimnasio serie a s
 
 **👉 App: [gym-marta.netlify.app](https://gym-marta.netlify.app/)**
 
+## Capturas
+
+<p align="center">
+  <img src="img/img_1.jpeg" width="250" alt="Pantalla de rutina con el progreso del día y las tarjetas de ejercicios">
+  <img src="img/img_2.jpeg" width="250" alt="Calendario mensual con los días entrenados rodeados por un aro de color según el deporte">
+  <img src="img/img_3.jpeg" width="250" alt="Resumen del mes con barras por rutina y deporte, y gráfico de entrenos de los últimos meses">
+</p>
+
+<p align="center"><em>Rutina del día · Calendario de entrenos · Resumen del mes</em></p>
+
 ## Funcionalidades
 
 - **Rutinas múltiples**: crea, renombra y elimina rutinas (p. ej. "Día A – Pierna", "Día B – Torso").
@@ -41,6 +51,7 @@ PWA (Progressive Web App) para registrar entrenos: rutinas de gimnasio serie a s
 ├── manifest.json  # Manifest de la PWA
 ├── icon.svg       # Logo (macedonia de rodajas: naranja, lima y lila) e icono de la pestaña
 ├── icon-*.png     # Iconos de la app para iPhone (180) y Android (192, 512)
+├── img/           # Capturas de pantalla para el README
 ├── firestore.rules # Reglas de seguridad de Firestore
 └── LICENSE        # Licencia MIT
 ```
