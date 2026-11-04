@@ -26,6 +26,7 @@ PWA (Progressive Web App) para registrar entrenos: rutinas de gimnasio serie a s
 - **Gráficas de progreso** (Chart.js): peso máximo, media de reps por serie y reps totales.
 - **Calendario mensual**: los días entrenados se pintan de color. Los días de gym salen solos a partir de los registros, y se pueden añadir otros entrenos (bici, Hyrox u otro) con duración y notas. Si un día tiene varios, la casilla se divide en colores.
 - **Modo claro y oscuro**: sigue el del móvil hasta que eliges uno con el botón de la barra superior.
+- **Copias de seguridad**: la app guarda una copia diaria de tus datos en Firestore (las últimas 14) y se pueden restaurar con un botón. También se pueden exportar e importar en un archivo `.json`.
 - **Papelera**: los ejercicios eliminados se pueden restaurar (se guardan los últimos 20).
 - **Cuentas de usuario** con email y contraseña (Firebase Auth).
 - **Sistema de aprobación**: las cuentas nuevas quedan pendientes hasta que la administradora las aprueba desde un panel dentro de la app.
@@ -76,6 +77,10 @@ users/{uid}
   ]
   trash: [ { routineIndex, exercise, deletedAt } ]
   activities: [ { date, type: 'gym' | 'bike' | 'hyrox' | 'other', minutes, notes } ]
+
+users/{uid}/backups/{id}
+  savedAt: ISO date
+  data: { ...copia completa de users/{uid} }
 ```
 
 ## Puesta en marcha

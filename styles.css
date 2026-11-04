@@ -726,6 +726,29 @@ select:focus-visible {
   margin-top: 8px;
 }
 
+/* ============ BACKUPS ============ */
+.modal-text {
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--text-secondary);
+  margin-bottom: 14px;
+}
+
+.modal h3.modal-section { margin: 18px 0 10px; }
+
+.backup-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.backup-actions .btn-secondary {
+  margin-top: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
 /* ============ HISTORY / LISTS ============ */
 .history-list {
   max-height: 400px;

@@ -47,6 +47,9 @@ const ICONS = {
   dumbbell: svg('<path d="M6 7v10M18 7v10M3 9.5v5M21 9.5v5M6 12h12"/>', 2.2),
   sun: svg('<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>'),
   moon: svg('<path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/>'),
+  shield: svg('<path d="M12 3l8 3v6c0 4.5-3.4 8.3-8 9-4.6-.7-8-4.5-8-9V6l8-3z"/><path d="M8.5 12l2.5 2.5 4.5-5"/>'),
+  download: svg('<path d="M12 4v11M7 10l5 5 5-5M5 20h14"/>'),
+  upload: svg('<path d="M12 20V9M7 14l5-5 5 5M5 4h14"/>'),
   chevronLeft: svg('<path d="M15 6l-6 6 6 6"/>', 2.5),
   chevronRight: svg('<path d="M9 6l6 6-6 6"/>', 2.5),
   arrowUp: svg('<path d="M12 19V5M6 11l6-6 6 6"/>', 2.8),
@@ -248,6 +251,10 @@ function getUserDocRef() {
 function listenToUserData() {
   const docRef = getUserDocRef();
   unsubscribeData = docRef.onSnapshot(doc => {
+    // A snapshot from the offline cache can be old (another device, an old
+    // install): never write on our own from it, only from server data
+    const fromServer = !doc.metadata.fromCache && !doc.metadata.hasPendingWrites;
+
     if (doc.exists) {
       data = doc.data();
       if (!data.trash) data.trash = [];
@@ -257,9 +264,13 @@ function listenToUserData() {
       data.trash = [];
       data.activities = [];
       data.checksDate = todayStr();
-      docRef.set(data);
+      if (fromServer) docRef.set(data);
     }
-    if (data.checksDate !== todayStr()) resetDailyChecks();
+
+    if (fromServer && doc.exists) {
+      backupOncePerDay(doc.data());
+      if (data.checksDate !== todayStr()) resetDailyChecks();
+    }
     render();
   }, err => {
     console.error('Firestore error:', err);
@@ -275,6 +286,164 @@ function listenToUserData() {
 function saveData(d) {
   if (!currentUser) return;
   getUserDocRef().set(d).catch(err => console.error('Save error:', err));
+}
+
+// ============ BACKUPS ============
+// users/{uid}/backups/{id}: { savedAt, data }. One per day, taken from server
+// data before anything else is written that day; the newest ones are kept
+const MAX_BACKUPS = 14;
+let backupDoneFor = null;
+
+function backupsRef() {
+  return getUserDocRef().collection('backups');
+}
+
+function backupOncePerDay(serverData) {
+  const today = todayStr();
+  if (backupDoneFor === today) return;
+  backupDoneFor = today;
+  const ref = backupsRef().doc(today);
+  ref.get({ source: 'server' })
+    .then(snap => {
+      if (snap.exists) return;
+      return ref.set({ savedAt: new Date().toISOString(), data: serverData }).then(pruneBackups);
+    })
+    .catch(err => {
+      backupDoneFor = null;
+      console.error('Backup error:', err);
+    });
+}
+
+function writeBackup(id, d) {
+  return backupsRef().doc(id).set({ savedAt: new Date().toISOString(), data: JSON.parse(JSON.stringify(d)) });
+}
+
+function pruneBackups() {
+  return backupsRef().get().then(snap => {
+    const docs = snap.docs.sort((a, b) => (b.data().savedAt || '').localeCompare(a.data().savedAt || ''));
+    return Promise.all(docs.slice(MAX_BACKUPS).map(d => d.ref.delete()));
+  });
+}
+
+function summarizeData(d) {
+  const routines = (d.routines || []).length;
+  const logs = (d.routines || []).reduce((sum, r) => sum + (r.exercises || []).reduce((s, e) => s + (e.logs || []).length, 0), 0);
+  return `${routines} ${routines === 1 ? 'rutina' : 'rutinas'} · ${logs} registros`;
+}
+
+function openBackups() {
+  openModal(`
+    <h2>Copias de seguridad</h2>
+    <p class="modal-text">La app guarda una copia al día de tus datos (las últimas ${MAX_BACKUPS}). Si algo se borra o se estropea, restaura la de un día anterior.</p>
+    <div class="history-list" id="backup-list"><p class="empty-list">Cargando copias...</p></div>
+    <h3 class="modal-section">Archivo en tu dispositivo</h3>
+    <div class="backup-actions">
+      <button class="btn-secondary" onclick="exportData()">${ICONS.download} Exportar</button>
+      <button class="btn-secondary" onclick="document.getElementById('import-file').click()">${ICONS.upload} Importar</button>
+    </div>
+    <input type="file" id="import-file" accept=".json,application/json" hidden onchange="importData(this)">
+    <button class="btn-secondary" onclick="closeModal()" style="margin-top:16px">Cerrar</button>
+  `);
+
+  backupsRef().get({ source: 'server' }).then(snap => {
+    const list = document.getElementById('backup-list');
+    if (!list) return;
+    const docs = snap.docs.sort((a, b) => (b.data().savedAt || '').localeCompare(a.data().savedAt || ''));
+    list.innerHTML = docs.length
+      ? docs.map(d => {
+          const b = d.data();
+          const when = new Date(b.savedAt);
+          const label = `${formatShortDate(todayStrOf(when))}, ${String(when.getHours()).padStart(2, '0')}:${String(when.getMinutes()).padStart(2, '0')}`;
+          return `
+            <div class="history-item">
+              <div>
+                <div class="history-date">${escapeHtml(label)}${d.id.includes('antes') ? ' · antes de restaurar' : ''}</div>
+                <div class="history-sub">${summarizeData(b.data || {})}</div>
+              </div>
+              <button class="btn-small" onclick="restoreBackup('${escapeHtml(d.id)}')">Restaurar</button>
+            </div>`;
+        }).join('')
+      : '<p class="empty-list">Todavía no hay copias. La primera se guarda hoy.</p>';
+  }).catch(() => {
+    const list = document.getElementById('backup-list');
+    if (list) list.innerHTML = '<p class="empty-list">No se pueden cargar las copias sin conexión.</p>';
+  });
+}
+
+// Replace the current data, keeping a copy of it first so the change can be undone
+function replaceData(newData, message) {
+  return writeBackup(`${todayStr()}_antes-${Date.now()}`, data).then(() => {
+    data = Object.assign({ trash: [], activities: [] }, newData, { checksDate: todayStr() });
+    data.activeRoutine = Math.min(data.activeRoutine || 0, data.routines.length - 1);
+    saveData(data);
+    pruneBackups();
+    closeModal();
+    toast(message);
+  }).catch(err => {
+    console.error('Restore error:', err);
+    toast('No se ha podido guardar. Comprueba la conexión');
+  });
+}
+
+function restoreBackup(id) {
+  backupsRef().doc(id).get({ source: 'server' }).then(snap => {
+    if (!snap.exists) return toast('Esa copia ya no existe');
+    const b = snap.data();
+    if (!confirm(`¿Restaurar la copia (${summarizeData(b.data || {})})? Tus datos actuales se guardarán antes como otra copia.`)) return;
+    replaceData(b.data, 'Copia restaurada');
+  }).catch(() => toast('Hace falta conexión para restaurar'));
+}
+
+function exportData() {
+  const blob = new Blob([JSON.stringify({ app: 'tutti-sport', exportedAt: new Date().toISOString(), data }, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `tutti-sport-${todayStr()}.json`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+// Accepts an exported file ({ data: {...} }) or a bare { routines: [...] }
+function parseImport(text) {
+  const parsed = JSON.parse(text);
+  const d = parsed && parsed.data ? parsed.data : parsed;
+  if (!d || !Array.isArray(d.routines) || !d.routines.length) throw new Error('El archivo no tiene rutinas');
+  d.routines = d.routines.map(r => ({
+    name: String(r.name || 'Rutina'),
+    exercises: (r.exercises || []).map(ex => ({
+      name: String(ex.name || 'Ejercicio'),
+      sets: parseInt(ex.sets) || 3,
+      reps: String(ex.reps || '8-12'),
+      weight: ex.weight ?? 0,
+      unit: ['kg', 'bloques', 'goma'].includes(ex.unit) ? ex.unit : 'kg',
+      done: false,
+      logs: Array.isArray(ex.logs) ? ex.logs : []
+    }))
+  }));
+  return d;
+}
+
+function importData(input) {
+  const file = input.files && input.files[0];
+  input.value = '';
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    let imported;
+    try {
+      imported = parseImport(reader.result);
+    } catch (err) {
+      toast('Archivo no válido: ' + err.message);
+      return;
+    }
+    if (!confirm(`¿Importar ${summarizeData(imported)}? Tus datos actuales se guardarán antes como copia.`)) return;
+    // Keep current calendar workouts and trash unless the file brings its own
+    replaceData(Object.assign({}, data, imported), 'Datos importados');
+  };
+  reader.readAsText(file);
 }
 
 // ============ STATS ============
@@ -367,6 +536,7 @@ function renderHeader() {
     <span class="routine-title">${escapeHtml(routine.name)}</span>
     <div class="routine-actions">
       ${isAdmin ? `<button class="btn-icon" onclick="openAdminPanel()" aria-label="Solicitudes pendientes">${ICONS.users}</button>` : ''}
+      <button class="btn-icon" onclick="openBackups()" aria-label="Copias de seguridad">${ICONS.shield}</button>
       <button class="btn-icon" onclick="openTrash()" aria-label="Papelera">${ICONS.restore}</button>
       <button class="btn-icon" onclick="openEditRoutine()" aria-label="Editar rutina">${ICONS.edit}</button>
       ${data.routines.length > 1 ? `<button class="btn-icon danger" onclick="deleteRoutine()" aria-label="Eliminar rutina">${ICONS.trash}</button>` : ''}
@@ -500,7 +670,10 @@ function formatShortDate(dateStr) {
 }
 
 function todayStr() {
-  const d = new Date();
+  return todayStrOf(new Date());
+}
+
+function todayStrOf(d) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 

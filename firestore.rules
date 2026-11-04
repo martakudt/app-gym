@@ -30,6 +30,11 @@ service cloud.firestore {
 
     match /users/{userId} {
       allow read, write: if signedIn() && request.auth.uid == userId && isApproved();
+
+      // Copias de seguridad diarias de cada usuario
+      match /backups/{backupId} {
+        allow read, write: if signedIn() && request.auth.uid == userId && isApproved();
+      }
     }
   }
 }
