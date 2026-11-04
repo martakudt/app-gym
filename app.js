@@ -1232,11 +1232,11 @@ function monthStats(days, year, month) {
     if (!info) continue;
     stats.trained++;
     info.types.forEach(t => stats.types[t] = (stats.types[t] || 0) + 1);
-    info.gym.forEach((_, name) => stats.routines.set(name, (stats.routines.get(name) || 0) + 1));
-    // Gym added by hand (no exercises logged that day)
-    if (info.types.has('gym') && !info.gym.size) {
-      stats.routines.set('Gym', (stats.routines.get('Gym') || 0) + 1);
-    }
+    // Routines done that day: from logged exercises, or gym workouts added by hand with a routine
+    const routinesToday = new Set(info.gym.keys());
+    info.activities.forEach(a => { if (a.type === 'gym' && a.routine) routinesToday.add(a.routine); });
+    if (info.types.has('gym') && !routinesToday.size) routinesToday.add('Gym');
+    routinesToday.forEach(name => stats.routines.set(name, (stats.routines.get(name) || 0) + 1));
     info.activities.forEach(a => {
       const t = activityType(a.type);
       stats.minutes[t] = (stats.minutes[t] || 0) + (Number(a.minutes) || 0);
@@ -1332,7 +1332,7 @@ function renderDayDetail(date, info) {
         <div class="day-item">
           <span class="act-dot" style="background:${type.color}"></span>
           <div class="day-item-info">
-            <div class="day-item-title">${type.label}${a.minutes ? ` · ${escapeHtml(a.minutes)} min` : ''}</div>
+            <div class="day-item-title">${type.label}${a.routine ? ` · ${escapeHtml(a.routine)}` : ''}${a.minutes ? ` · ${escapeHtml(a.minutes)} min` : ''}</div>
             ${a.notes ? `<div class="day-item-sub">${escapeHtml(a.notes)}</div>` : ''}
           </div>
           <button class="history-delete" onclick="deleteActivity(${a.index})" aria-label="Borrar entreno">${ICONS.close}</button>
