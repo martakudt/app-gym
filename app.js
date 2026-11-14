@@ -464,23 +464,34 @@ function render() {
   renderHeader();
   renderExercises();
   renderCalendar();
+  renderPlan();
+  renderBike();
 }
 
 // ============ VIEWS ============
 let currentView = 'routine';
 
+const VIEWS = ['routine', 'plan', 'bike', 'calendar'];
+const FAB_LABELS = { routine: 'Añadir ejercicio', plan: 'Añadir', bike: 'Registrar salida', calendar: 'Añadir entreno' };
+
 function switchView(view) {
   currentView = view;
-  document.getElementById('view-routine').hidden = view !== 'routine';
-  document.getElementById('view-calendar').hidden = view !== 'calendar';
+  VIEWS.forEach(v => { document.getElementById(`view-${v}`).hidden = v !== view; });
   document.querySelectorAll('.bottom-nav-item').forEach(b => b.classList.toggle('active', b.dataset.view === view));
-  document.getElementById('fab').setAttribute('aria-label', view === 'calendar' ? 'Añadir entreno' : 'Añadir ejercicio');
+  document.getElementById('fab').setAttribute('aria-label', FAB_LABELS[view]);
   window.scrollTo(0, 0);
   render();
 }
 
 function onFabClick() {
   if (currentView === 'calendar') openAddActivity(selectedDate);
+  else if (currentView === 'bike') openBikeLog();
+  else if (currentView === 'plan') {
+    if (planTab === 'workouts') openWorkoutEditor();
+    else if (planTab === 'goals') openGoalEditor();
+    else if (todayStr() >= plan().startDate) openPlanDay(currentWeekIndex(), (new Date().getDay() + 6) % 7 + 1);
+    else openAddActivity(todayStr());
+  }
   else openAddExercise();
 }
 
