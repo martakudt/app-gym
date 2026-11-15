@@ -29,7 +29,16 @@ service cloud.firestore {
     }
 
     match /users/{userId} {
-      allow read, write: if signedIn() && request.auth.uid == userId && isApproved();
+      allow read, create: if signedIn() && request.auth.uid == userId && isApproved();
+
+      // Cada guardado debe ser exactamente la versión siguiente a la del servidor
+      // (campo 'rev'). Así un dispositivo con datos viejos, o con una versión
+      // antigua de la app, no puede sobrescribir datos más nuevos.
+      allow update: if signedIn() && request.auth.uid == userId && isApproved()
+        && request.resource.data.get('rev', 0) == resource.data.get('rev', 0) + 1;
+
+      // La app nunca borra el documento entero
+      allow delete: if false;
 
       // Copias de seguridad diarias de cada usuario
       match /backups/{backupId} {

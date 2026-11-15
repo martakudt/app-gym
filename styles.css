@@ -273,6 +273,32 @@ select:focus-visible {
   opacity: 0.75;
 }
 
+/* ============ WEEK STRIP (routine view) ============ */
+.week-card {
+  margin: 8px 16px 0;
+  padding: 12px 12px 10px;
+  border-radius: var(--radius-lg);
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+}
+
+.week-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 4px 6px;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.week-count {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+
 /* ============ ROUTINE HEADER ============ */
 .routine-header {
   display: flex;
@@ -1459,13 +1485,6 @@ select:focus-visible {
   color: var(--accent-ink);
 }
 
-.plan-notes {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  padding: 8px 16px 0;
-}
-
 .plan-note {
   font-size: 13px;
   line-height: 1.45;
@@ -1737,6 +1756,14 @@ select:focus-visible {
   font-variant-numeric: tabular-nums;
 }
 
+.workout-how {
+  display: block;
+  margin-top: 3px;
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: var(--text-muted);
+}
+
 .modal-actions {
   display: flex;
   flex-direction: column;
@@ -1940,55 +1967,86 @@ select:focus-visible {
   margin-top: 2px;
 }
 
-.plan-week-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 6px;
+/* Plan calendar: one month, each day marked with its planned workout */
+.pcal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
 }
 
-.plan-week-cell {
+.pcal-title {
+  font-size: 17px;
+  font-weight: 800;
+  text-transform: capitalize;
+}
+
+.pcal-grid { gap: 4px; }
+
+.pcal-day {
   position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 2px;
+  min-height: 54px;
   min-width: 0;
-  padding: 8px 8px 8px 10px;
-  border-radius: 10px;
+  padding: 6px 2px 5px;
+  border-radius: 12px;
   border: 1px solid transparent;
   background: var(--bg-input);
-  box-shadow: inset 3px 0 0 var(--phase);
   color: var(--text);
-  cursor: pointer;
-  text-align: left;
   font-family: inherit;
-}
-
-.plan-week-cell small {
-  font-size: 9.5px;
-  font-weight: 700;
-  color: var(--text-muted);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 100%;
-}
-
-.plan-week-cell b { font-size: 16px; font-weight: 800; font-variant-numeric: tabular-nums; }
-.plan-week-cell b span { font-size: 10px; font-weight: 700; color: var(--text-muted); margin-left: 2px; }
-.plan-week-cell.deload { border: 1px dashed var(--border-light); }
-.plan-week-cell.past { opacity: 0.55; }
-.plan-week-cell.current { border: 2px solid var(--text); opacity: 1; }
-
-.plan-week-goal {
-  position: absolute;
-  top: 6px;
-  right: 6px;
-  color: var(--act-bike);
+  cursor: pointer;
   display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
 }
 
-.plan-week-goal .icon { width: 13px; height: 13px; }
+.pcal-num {
+  font-size: 13px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.pcal-mark {
+  width: 18px;
+  height: 5px;
+  border-radius: 3px;
+  background: var(--c);
+}
+
+.pcal-km {
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1;
+  padding: 3px 5px;
+  border-radius: 6px;
+  border: 1.5px solid var(--c);
+  font-variant-numeric: tabular-nums;
+}
+
+.pcal-day.rest { background: transparent; color: var(--text-muted); }
+.pcal-day.outside { background: transparent; color: var(--text-muted); opacity: 0.45; cursor: default; }
+.pcal-day.deload { border: 1px dashed var(--border-light); }
+.pcal-day.today { box-shadow: inset 0 0 0 2px var(--text); }
+
+/* Done: filled with the workout color, dark text on top */
+.pcal-day.done { background: var(--c); color: var(--on-lime); }
+.pcal-day.done .pcal-mark { background: var(--on-lime); opacity: 0.35; }
+.pcal-day.done .pcal-km { border-color: var(--on-lime); }
+
+.pcal-day.skipped .pcal-num { text-decoration: line-through; color: var(--text-muted); }
+.pcal-day.skipped .pcal-mark,
+.pcal-day.skipped .pcal-km { opacity: 0.35; }
+
+.pcal-goal {
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  display: flex;
+  color: var(--act-bike);
+}
+
+.pcal-day.done .pcal-goal { color: var(--on-lime); }
+.pcal-goal .icon { width: 11px; height: 11px; }
 
 /* Bike table */
 .bike-table-head,

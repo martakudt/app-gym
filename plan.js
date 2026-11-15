@@ -18,10 +18,12 @@ const PHASE_COLORS = ['var(--act-other)', 'var(--act-hyrox)', 'var(--act-bike)',
 const BIKE_KINDS = {
   'bike-long': 'Salida larga',
   'bike-easy': 'Salida suave',
-  'bike-indoor': 'Rodillo / indoor'
+  'bike-indoor': 'Bici estática'
 };
 
 // ---------- Default plan ----------
+const PLAN_VERSION = 3;
+
 const WARMUP = {
   title: `Calentamiento (10')`,
   lines: [
@@ -44,6 +46,18 @@ const STRENGTH_WARMUP = {
 };
 const STRENGTH_NOTE = 'Elige un peso con el que acabes cada serie sintiendo que podrías hacer 2 repeticiones más. Cuando completes todas las series con facilidad, sube un poco. En semana de descarga: 1 serie menos y un 20 % menos de peso.';
 
+// How to do each exercise: shown under the line (text after " | ")
+const HOW = {
+  plank: 'Apoyada en antebrazos y puntas de los pies, cuerpo en línea recta. Aprieta glúteos y abdomen sin hundir ni subir la cadera.',
+  sidePlank: 'De lado, apoyada en el antebrazo y el lateral del pie (o en las rodillas para hacerla más fácil). Cadera arriba y cuerpo en línea recta.',
+  deadBug: 'Boca arriba, brazos estirados hacia el techo y rodillas dobladas a 90°. Baja a la vez un brazo y la pierna contraria sin que la zona lumbar se despegue del suelo, y cambia.',
+  hollow: 'Boca arriba, pega la zona lumbar al suelo y despega hombros y piernas, con los brazos estirados por detrás de la cabeza. Para hacerlo más fácil, dobla las rodillas o lleva los brazos junto al cuerpo.',
+  pallof: 'De lado a una polea o una goma a la altura del pecho. Agarra con las dos manos, empuja hacia delante, aguanta 2" y vuelve, sin dejar que el tronco gire.',
+  farmer: 'Camina erguida con una kettlebell o mancuerna pesada en cada mano, hombros abajo y atrás y abdomen firme.',
+  birdDog: 'A cuatro patas, estira a la vez un brazo y la pierna contraria, aguanta 2" y vuelve sin que la cadera se gire.',
+  glute: 'Boca arriba con las rodillas dobladas y los pies en el suelo. Sube la cadera apretando los glúteos y baja despacio.'
+};
+
 function defaultWorkouts() {
   const workouts = [
     {
@@ -58,7 +72,7 @@ function defaultWorkouts() {
           'Remo con mancuerna a una mano · 3 × 10 por brazo · desc. 60"',
           'Zancada atrás · 2 × 10 por pierna · desc. 60"'
         ] },
-        { title: 'Core', lines: ['Plancha · 3 × 30"', 'Dead bug · 3 × 10'] }
+        { title: 'Core', lines: [`Plancha · 3 × 30" | ${HOW.plank}`, `Dead bug · 3 × 10 | ${HOW.deadBug}`] }
       ],
       notes: STRENGTH_NOTE
     },
@@ -74,7 +88,7 @@ function defaultWorkouts() {
           'Jalón al pecho o dominadas asistidas · 3 × 8-10 · desc. 90"',
           'Hip thrust · 3 × 10 · desc. 60"'
         ] },
-        { title: 'Core', lines: ['Farmer carry · 3 × 30 m', 'Pallof press · 3 × 10 por lado'] }
+        { title: 'Core', lines: [`Farmer carry · 3 × 30 m | ${HOW.farmer}`, `Pallof press · 3 × 10 por lado | ${HOW.pallof}`] }
       ],
       notes: STRENGTH_NOTE
     },
@@ -90,7 +104,7 @@ function defaultWorkouts() {
           'Flexiones (en banco si cuesta) · 3 × 8-12 · desc. 60"',
           'Remo invertido o en TRX · 3 × 10 · desc. 60"'
         ] },
-        { title: 'Core', lines: ['Hollow hold · 3 × 20-30"', 'Plancha lateral · 3 × 20-30" por lado'] }
+        { title: 'Core', lines: [`Hollow hold · 3 × 20-30" | ${HOW.hollow}`, `Plancha lateral · 3 × 20-30" por lado | ${HOW.sidePlank}`] }
       ],
       notes: 'Puente entre la fuerza y lo Hyrox: ayuda con los wall balls y los burpees. ' + STRENGTH_NOTE
     },
@@ -155,7 +169,12 @@ function defaultWorkouts() {
           `Remo · 3'`,
           `Comba · 2'`
         ] },
-        { title: `Core (8') · 3 vueltas`, lines: ['Plancha · 30"', 'Dead bug · 30"', 'Plancha lateral · 30" por lado', 'Hollow hold · 30"'] }
+        { title: `Core (8') · 3 vueltas`, lines: [
+          `Plancha · 30" | ${HOW.plank}`,
+          `Dead bug · 30" | ${HOW.deadBug}`,
+          `Plancha lateral · 30" por lado | ${HOW.sidePlank}`,
+          `Hollow hold · 30" | ${HOW.hollow}`
+        ] }
       ],
       notes: 'Esfuerzo 6-7/10: tienes que poder decir frases cortas. Si las piernas van cargadas, cambia la carrera por remo o bici.'
     },
@@ -195,7 +214,7 @@ function defaultWorkouts() {
           'Desayuna bien y prueba la comida en salidas cortas, no el día del objetivo'
         ] },
         { title: 'En invierno', lines: [
-          'Mira la previsión: si llueve el sábado, prueba el domingo o haz el Plan B de rodillo',
+          'Mira la previsión: si llueve el sábado, prueba el domingo o haz el Plan B en la bici estática',
           'Capas: térmica, cortavientos, guantes y cubrebotas',
           'Luces delante y detrás: anochece pronto'
         ] }
@@ -211,32 +230,46 @@ function defaultWorkouts() {
       notes: ''
     },
     {
-      id: 'bike-indoor', name: 'Plan B: rodillo o bici estática', type: 'bici', minutes: 60,
-      summary: 'Para los días de lluvia o mucho frío',
+      id: 'bike-indoor', name: 'Plan B: bici estática', type: 'bici', minutes: 60,
+      summary: 'Para los días de lluvia o mucho frío, en el gym o en casa',
       blocks: [
-        { title: `Calentamiento (10')`, lines: ['Pedaleo suave subiendo la cadencia poco a poco'] },
-        { title: `Principal (40-60')`, lines: [
-          'Opción 1: zona 2 continua, a un ritmo en el que puedas hablar',
-          `Opción 2: 4 × 6' algo más fuerte, con 3' suaves entre medias`
+        { title: `Calentamiento (10')`, lines: [
+          'Pedaleo suave, subiendo la resistencia y la cadencia poco a poco'
         ] },
-        { title: `Vuelta a la calma (5')`, lines: ['Pedaleo muy suave y estiramientos'] }
+        { title: `Principal (40-60') · elige una opción`, lines: [
+          'Opción 1, continuo: ritmo cómodo en el que puedas hablar | Pon una resistencia media, como un llano con algo de viento. Si notas que te cuesta hablar, baja un nivel.',
+          `Opción 2, "subidas": 4 × 6' con más resistencia y 3' suaves entre medias | Sube 2-3 niveles de resistencia como si fuera una cuesta, sin ir a tope (7/10). Baja la cadencia, pero sin atascarte.`
+        ] },
+        { title: `Vuelta a la calma (5')`, lines: ['Pedaleo muy suave y luego estiramientos de cuádriceps, isquios y cadera'] }
       ],
-      notes: '1 hora de rodillo equivale más o menos a una salida de 25-30 km. Apunta los km que marque la bici, o solo los minutos.'
+      notes: '45-60 minutos de bici estática cuentan como la salida del finde cuando hace mal tiempo. Si la bici marca km, apúntalos; si no, solo los minutos. Cuando la salida larga ya pase de 2 horas, mejor intenta moverla a otro día seco.'
     },
     {
-      id: 'mov', name: 'Movilidad + core suave', type: 'movilidad', minutes: 25, optional: true,
-      summary: 'Para soltar el cuerpo sin cargar las piernas',
+      id: 'mov', name: 'Movilidad + core suave', type: 'movilidad', minutes: 35, optional: true,
+      summary: 'Para soltar cadera, espalda y piernas sin cargarlas',
       blocks: [
-        { title: `Movilidad (15')`, lines: [
-          'Gato-camello · 10',
-          'Rotaciones torácicas · 8 por lado',
-          'Estiramiento de flexor de cadera · 45" por lado',
-          `Sentadilla profunda asistida · 1'`,
-          'Isquios y gemelos · 45" por lado'
+        { title: `Espalda y cadera (12')`, lines: [
+          'Gato-camello · 10 lentas | A cuatro patas: redondea la espalda mirando al ombligo y luego húndela mirando al frente. Despacio, siguiendo la respiración.',
+          'Rotaciones torácicas · 8 por lado | A cuatro patas, con una mano en la nuca: lleva el codo hacia el brazo de apoyo y luego ábrelo hacia el techo siguiéndolo con la mirada.',
+          'Estiramiento del flexor de cadera · 45" por lado | Una rodilla en el suelo y el otro pie delante. Aprieta el glúteo de la pierna de atrás y lleva la cadera hacia delante sin arquear la espalda. Se nota delante de la cadera, y viene muy bien después de la bici.',
+          '90/90 de cadera · 6 por lado | Sentada en el suelo con las dos rodillas dobladas a 90°, una delante y otra a un lado. Gira las rodillas de un lado a otro, con las manos apoyadas detrás si lo necesitas.',
+          `Sentadilla profunda asistida · 1' | Agárrate a algo firme y baja a una sentadilla profunda con los talones en el suelo. Empuja las rodillas hacia fuera con los codos y respira.`
         ] },
-        { title: `Core suave (10')`, lines: ['Dead bug · 2 × 10', 'Plancha lateral · 2 × 20" por lado', 'Puente de glúteo · 2 × 15'] }
+        { title: `Piernas y pecho (12')`, lines: [
+          'Isquios con toalla · 45" por pierna | Boca arriba, sube una pierna estirada con una toalla o goma en el pie y tira suave hacia ti. La otra pierna, estirada en el suelo.',
+          'Cuádriceps de pie · 45" por pierna | Coge el empeine y lleva el talón al glúteo, con las rodillas juntas y la cadera un poco hacia delante. Apóyate en la pared si hace falta.',
+          'Gemelos contra la pared · 45" por pierna | Manos en la pared y una pierna atrás, estirada y con el talón en el suelo. Inclínate hacia la pared hasta notar el gemelo.',
+          'Glúteo en figura 4 · 45" por lado | Boca arriba, cruza un tobillo sobre la rodilla contraria y acerca las dos piernas al pecho.',
+          'Pecho en el marco de una puerta · 45" por lado | Apoya el antebrazo en el marco a la altura del hombro y gira el cuerpo hacia el otro lado. Abre el pecho, que en la bici se cierra.'
+        ] },
+        { title: `Core suave (10')`, lines: [
+          `Dead bug · 2 × 10 | ${HOW.deadBug}`,
+          `Bird dog · 2 × 8 por lado | ${HOW.birdDog}`,
+          `Plancha lateral · 2 × 20-30" por lado | ${HOW.sidePlank}`,
+          `Puente de glúteo · 2 × 15 | ${HOW.glute}`
+        ] }
       ],
-      notes: ''
+      notes: 'Si tienes tiempo, haz 2 vueltas del bloque de piernas (unos 45 minutos en total). Respira lento: los estiramientos se notan, pero no deben doler.'
     }
   ];
   return JSON.parse(JSON.stringify(workouts));
@@ -288,7 +321,7 @@ function defaultWeeks() {
 
 function defaultPhases() {
   return [
-    { name: 'Base de invierno', start: '2026-11-16', end: '2027-01-10', focus: 'Constancia. Si llueve, Plan B de rodillo. Navidad flexible.' },
+    { name: 'Base de invierno', start: '2026-11-16', end: '2027-01-10', focus: 'Constancia. Si llueve, Plan B en la bici estática. Navidad flexible.' },
     { name: 'Construcción', start: '2027-01-11', end: '2027-03-07', focus: 'Subir poco a poco la salida larga hasta los 45 km.' },
     { name: 'Primer objetivo', start: '2027-03-08', end: '2027-04-04', focus: 'Llegar a los 50 km cómoda.' },
     { name: 'Primavera', start: '2027-04-05', end: '2027-05-30', focus: 'Más bici, de 50 a 66 km. Híbridos más suaves para guardar piernas.' },
@@ -308,7 +341,7 @@ function defaultGoals() {
 
 function defaultPlan() {
   return {
-    version: 1,
+    version: PLAN_VERSION,
     startDate: '2026-11-16',
     workouts: defaultWorkouts(),
     weeks: defaultWeeks(),
@@ -330,7 +363,20 @@ function plan() {
   if (!Array.isArray(p.skipped)) p.skipped = [];
   if (!Array.isArray(p.goals)) p.goals = [];
   if (!Array.isArray(p.phases)) p.phases = [];
+  if ((p.version || 1) < PLAN_VERSION) migratePlan(p);
   return p;
+}
+
+// v2: stationary bike instead of a trainer, longer mobility, how-to for each
+// exercise. v3: calf stretch against the wall.
+// Default workouts never edited by hand get the new content.
+function migratePlan(p) {
+  const fresh = defaultWorkouts();
+  p.workouts = p.workouts.map(w => (w.edited ? w : fresh.find(f => f.id === w.id) || w));
+  p.phases.forEach(ph => {
+    if (ph.focus) ph.focus = ph.focus.replace('Plan B de rodillo', 'Plan B en la bici estática');
+  });
+  p.version = PLAN_VERSION;
 }
 
 function planParse(s) {
@@ -584,16 +630,6 @@ function renderPlanWeek() {
       </div>
     </div>`;
 
-  const notes = [];
-  if (today < p.startDate) notes.push(`El plan empieza el ${longDate(p.startDate)}.`);
-  if (week.note) notes.push(escapeHtml(week.note));
-  const month = planParse(start).getMonth();
-  if ([10, 11, 0, 1].includes(month)) {
-    notes.push('Invierno: si llueve el sábado, prueba el domingo o pulsa la salida larga y cámbiala por el Plan B de rodillo.');
-  }
-  const goal = nextGoal();
-  if (goal) notes.push(`Próximo objetivo: <b>${escapeHtml(goal.title)}</b> · ${formatShortDate(goal.date)} · ${countdown(goal.date).toLowerCase()}`);
-
   const isCurrent = i === currentWeekIndex();
 
   return `
@@ -606,7 +642,6 @@ function renderPlanWeek() {
       </button>
       <button class="btn-icon" onclick="changePlanWeek(1)" ${i === p.weeks.length - 1 ? 'disabled' : ''} aria-label="Semana siguiente">${ICONS.chevronRight}</button>
     </div>
-    ${notes.length ? `<div class="plan-notes">${notes.map(n => `<div class="plan-note">${n}</div>`).join('')}</div>` : ''}
     <div class="plan-days">${rows}</div>
     <p class="plan-hint">Pulsa un día para ver el entreno, marcarlo como hecho o cambiarlo.</p>`;
 }
@@ -634,7 +669,7 @@ function openPlanDay(i, wd) {
     if (a) actions += `<button class="btn-secondary" onclick="undoPlanDone(${i}, ${wd})">Deshacer</button>`;
   } else {
     actions += `<button class="btn-primary btn-with-icon" onclick="openPlanDone(${i}, ${wd})">${ICONS.check} Marcar como hecho</button>`;
-    if (id === 'bike-long') actions += `<button class="btn-secondary" onclick="swapToIndoor(${i}, ${wd})">Llueve: cambiar por rodillo</button>`;
+    if (id === 'bike-long') actions += `<button class="btn-secondary" onclick="swapToIndoor(${i}, ${wd})">Llueve: cambiar por bici estática</button>`;
     actions += `<button class="btn-secondary" onclick="toggleSkip(${i}, ${wd})">${status === 'skipped' ? 'Quitar "saltado"' : 'Saltar este día'}</button>`;
   }
   actions += `<button class="btn-secondary" onclick="openChangeWorkout(${i}, ${wd})">Cambiar entreno</button>`;
@@ -729,7 +764,7 @@ function swapToIndoor(i, wd) {
   plan().weeks[i].days[wd] = 'bike-indoor';
   saveData(data);
   openPlanDay(i, wd);
-  toast('Cambiado por rodillo');
+  toast('Cambiado por bici estática');
 }
 
 function openChangeWorkout(i, wd) {
@@ -778,11 +813,18 @@ function setPlanDay(i, wd, id) {
 }
 
 // ---------- Workout detail ----------
+// "Name · dose | how to do it"
+function splitLine(line) {
+  const [main, ...how] = String(line).split(' | ');
+  return { parts: main.split(' · '), how: how.join(' | ').trim() };
+}
+
 function formatLine(line) {
-  const parts = String(line).split(' · ');
-  const head = escapeHtml(parts[0]);
-  if (parts.length < 2) return head;
-  return `${head}<span class="workout-dose">${parts.slice(1).map(escapeHtml).join(' · ')}</span>`;
+  const { parts, how } = splitLine(line);
+  let html = escapeHtml(parts[0]);
+  if (parts.length > 1) html += `<span class="workout-dose">${parts.slice(1).map(escapeHtml).join(' · ')}</span>`;
+  if (how) html += `<span class="workout-how">${escapeHtml(how)}</span>`;
+  return html;
 }
 
 function workoutBody(w) {
@@ -881,7 +923,7 @@ function workoutToRoutine(id) {
   if (!w) return;
   const exercises = [];
   (w.blocks || []).forEach(b => (b.lines || []).forEach(line => {
-    const parts = String(line).split(' · ');
+    const { parts } = splitLine(line);
     const match = (parts[1] || '').match(/^(\d+)\s*[x×]\s*(.+)$/);
     if (!match) return;
     exercises.push({
@@ -956,7 +998,7 @@ function renderWorkoutEditor() {
       <span>Entreno opcional (no cuenta en el progreso de la semana)</span>
     </label>
     <h3 class="modal-section">Bloques</h3>
-    <p class="modal-text">Un ejercicio por línea. Si quieres, separa la dosis con " · ", por ejemplo: <b>Sentadilla · 4 × 8 · desc. 2'</b></p>
+    <p class="modal-text">Un ejercicio por línea. Si quieres, separa la dosis con " · " y añade cómo se hace después de " | ", por ejemplo: <b>Sentadilla · 4 × 8 · desc. 2' | Espalda recta y rodillas hacia fuera</b></p>
     ${blocks}
     <button class="btn-secondary btn-with-icon" onclick="addDraftBlock()">${ICONS.plus} Añadir bloque</button>
     <div class="form-group" style="margin-top:14px">
@@ -1002,6 +1044,8 @@ function saveWorkoutDraft() {
     return;
   }
   d.blocks = d.blocks.filter(b => b.title || b.lines.length);
+  // Hand-edited workouts are kept as they are by future plan updates
+  d.edited = true;
   const p = plan();
   if (d.id) {
     const index = p.workouts.findIndex(w => w.id === d.id);
@@ -1067,25 +1111,6 @@ function renderPlanGoals() {
       </button>`;
   }).join('');
 
-  const current = currentWeekIndex();
-  const cells = p.weeks.map((week, i) => {
-    const start = weekStart(i);
-    const end = weekEnd(i);
-    const ph = phaseIndexFor(weekDate(i, 6));
-    const hasGoal = p.goals.some(g => g.date >= start && g.date <= end);
-    const classes = ['plan-week-cell'];
-    if (i === current && today >= p.startDate) classes.push('current');
-    if (week.deload) classes.push('deload');
-    if (end < today) classes.push('past');
-    const label = `Semana ${i + 1}, ${formatShortDate(start)}: salida de ${week.km} km${week.deload ? ', descarga' : ''}${hasGoal ? ', objetivo' : ''}`;
-    return `
-      <button class="${classes.join(' ')}" style="--phase:${phaseColor(ph)}" onclick="goToPlanWeek(${i})" aria-label="${escapeHtml(label)}" title="${escapeHtml(label)}">
-        <small>S${i + 1} · ${formatShortDate(start)}</small>
-        <b>${week.km}<span>km</span></b>
-        ${hasGoal ? `<span class="plan-week-goal">${ICONS.trophy}</span>` : ''}
-      </button>`;
-  }).join('');
-
   return `
     ${hero}
     <div class="plan-section">
@@ -1100,8 +1125,7 @@ function renderPlanGoals() {
       <div class="plan-section-row">
         <span class="report-title">Calendario del plan</span>
       </div>
-      <p class="plan-hint left">Cada fila es un bloque de 4 semanas. El número es la salida larga del sábado; las semanas con borde discontinuo son de descarga.</p>
-      <div class="plan-week-grid">${cells}</div>
+      ${renderPlanCalendar()}
     </div>
     <div class="plan-section">
       <div class="plan-section-row">
@@ -1117,6 +1141,94 @@ function renderPlanGoals() {
       <button class="btn-secondary" onclick="addPlanBlock()">Añadir 4 semanas al final</button>
       <button class="btn-danger-full" onclick="resetPlan()">Restablecer el plan original</button>
     </div>`;
+}
+
+// ---------- Plan calendar (one month at a time) ----------
+let planCalMonth = null;
+
+function planMonthBounds() {
+  const p = plan();
+  const [sy, sm] = p.startDate.split('-').map(Number);
+  const [ey, em] = weekEnd(p.weeks.length - 1).split('-').map(Number);
+  return { first: new Date(sy, sm - 1, 1), last: new Date(ey, em - 1, 1) };
+}
+
+function renderPlanCalendar() {
+  const p = plan();
+  const today = todayStr();
+  const { first, last } = planMonthBounds();
+  if (!planCalMonth) {
+    const now = new Date();
+    planCalMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+  }
+  if (planCalMonth < first) planCalMonth = first;
+  if (planCalMonth > last) planCalMonth = last;
+
+  const year = planCalMonth.getFullYear();
+  const month = planCalMonth.getMonth();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const offset = (new Date(year, month, 1).getDay() + 6) % 7;
+  const planEnd = weekEnd(p.weeks.length - 1);
+
+  let cells = WEEKDAYS.map(w => `<span class="cal-weekday">${w}</span>`).join('');
+  cells += '<span></span>'.repeat(offset);
+
+  for (let d = 1; d <= daysInMonth; d++) {
+    const date = dateKey(year, month, d);
+    const classes = ['pcal-day'];
+    if (date === today) classes.push('today');
+    const goal = p.goals.find(g => g.date === date);
+    const trophy = goal ? `<span class="pcal-goal" title="${escapeHtml(goal.title)}">${ICONS.trophy}</span>` : '';
+
+    if (date < p.startDate || date > planEnd) {
+      cells += `<span class="${classes.join(' ')} outside"><span class="pcal-num">${d}</span>${trophy}</span>`;
+      continue;
+    }
+
+    const i = Math.floor(planDiff(p.startDate, date) / 7);
+    const wd = planDiff(weekStart(i), date) + 1;
+    const week = p.weeks[i];
+    const w = workoutById(week.days[wd]);
+    const status = dayStatus(i, wd);
+    if (week.deload) classes.push('deload');
+    classes.push(status);
+
+    let mark = '';
+    let label = `${d} de ${MONTH_NAMES[month]}: descanso`;
+    if (w) {
+      const color = planColor(w.type);
+      const isLong = LONG_RIDE_IDS.includes(w.id);
+      mark = isLong
+        ? `<span class="pcal-km" style="--c:${color}">${week.km}</span>`
+        : `<span class="pcal-mark" style="--c:${color}"></span>`;
+      classes.push('has-workout');
+      label = `${d} de ${MONTH_NAMES[month]}: ${w.name}${isLong ? ` ${week.km} km` : ''}${status === 'done' ? ', hecho' : status === 'skipped' ? ', saltado' : ''}`;
+      cells += `<button class="${classes.join(' ')}" style="--c:${color}" onclick="openPlanDay(${i}, ${wd})" aria-label="${escapeHtml(label)}" title="${escapeHtml(label)}">
+          <span class="pcal-num">${d}</span>${mark}${trophy}
+        </button>`;
+    } else {
+      cells += `<button class="${classes.join(' ')}" onclick="openPlanDay(${i}, ${wd})" aria-label="${escapeHtml(label)}"><span class="pcal-num">${d}</span>${trophy}</button>`;
+    }
+  }
+
+  const legend = Object.keys(PLAN_TYPES).map(t =>
+    `<span><span class="act-dot" style="background:${planColor(t)}"></span>${PLAN_TYPES[t].label}</span>`
+  ).join('');
+
+  return `
+    <div class="pcal-head">
+      <button class="btn-icon" onclick="changePlanCalMonth(-1)" ${planCalMonth <= first ? 'disabled' : ''} aria-label="Mes anterior">${ICONS.chevronLeft}</button>
+      <span class="pcal-title">${MONTH_NAMES[month]} ${year}</span>
+      <button class="btn-icon" onclick="changePlanCalMonth(1)" ${planCalMonth >= last ? 'disabled' : ''} aria-label="Mes siguiente">${ICONS.chevronRight}</button>
+    </div>
+    <div class="calendar-grid pcal-grid">${cells}</div>
+    <div class="calendar-legend">${legend}</div>
+    <p class="plan-hint left">El número es la salida larga de esa semana, en km. Relleno de color: hecho. Borde discontinuo: semana de descarga. Pulsa un día para ver o marcar el entreno.</p>`;
+}
+
+function changePlanCalMonth(delta) {
+  planCalMonth = new Date(planCalMonth.getFullYear(), planCalMonth.getMonth() + delta, 1);
+  renderPlan();
 }
 
 function openGoalEditor(id) {
@@ -1377,9 +1489,10 @@ function renderBike() {
         <div class="day-item">
           <span class="act-dot" style="background:${ACTIVITY_TYPES.bike.color}"></span>
           <div class="day-item-info">
-            <div class="day-item-title">${a.kmValue ? `${a.kmValue} km` : 'Salida'}${a.minutes ? ` · ${escapeHtml(a.minutes)} min` : ''}${a.indoor ? ' · rodillo' : ''}</div>
+            <div class="day-item-title">${a.kmValue ? `${a.kmValue} km` : 'Salida'}${a.minutes ? ` · ${escapeHtml(a.minutes)} min` : ''}${a.indoor ? ' · bici estática' : ''}</div>
             <div class="day-item-sub">${escapeHtml(longDate(a.date))}${a.kmValue && a.minutes ? ` · ${(a.kmValue / a.minutes * 60).toFixed(1)} km/h` : ''}</div>
           </div>
+          <button class="history-delete" onclick="openEditActivity(${a.index})" aria-label="Editar salida">${ICONS.edit}</button>
         </div>`).join('')
     : '<p class="day-empty">Aún no hay salidas. Pulsa + para apuntar la primera.</p>';
 
@@ -1493,6 +1606,7 @@ function openBikeWeek(i) {
             <div class="day-item-title">${a.kmValue ? `${a.kmValue} km` : 'Salida'}${a.minutes ? ` · ${escapeHtml(a.minutes)} min` : ''}</div>
             <div class="day-item-sub">${escapeHtml(longDate(a.date))}</div>
           </div>
+          <button class="history-delete" onclick="openEditActivity(${a.index})" aria-label="Editar salida">${ICONS.edit}</button>
         </div>`).join('')}</div>` : ''}
     <button class="btn-primary" onclick="saveBikeWeek(${i})">Guardar</button>
     <button class="btn-secondary" onclick="openBikeLog('${weekDate(i, 6)}')">Registrar salida de esta semana</button>
@@ -1564,7 +1678,7 @@ function saveBikeLog() {
     return;
   }
   const indoor = kind === 'bike-indoor';
-  const notes = [km ? `${km} km` : '', indoor ? 'rodillo' : '', extra].filter(Boolean).join(' · ');
+  const notes = [km ? `${km} km` : '', indoor ? 'bici estática' : '', extra].filter(Boolean).join(' · ');
   pushActivity({
     date,
     type: 'bike',

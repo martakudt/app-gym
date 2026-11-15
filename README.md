@@ -66,6 +66,7 @@ profiles/{uid}
   createdAt: "YYYY-MM-DD"
 
 users/{uid}
+  rev: number          # versión: cada guardado debe ser la siguiente (lo exigen las reglas)
   activeRoutine: number
   routines: [
     {
@@ -98,6 +99,7 @@ users/{uid}/backups/{id}
 La comprobación de "cuenta aprobada" y de "admin" se hace en el navegador, así que **la seguridad real depende de las reglas de Firestore**. Las reglas están en [firestore.rules](firestore.rules); cópialas en **Firestore → Reglas** de la consola (cambiando el UID de la admin por el tuyo) y publícalas. Garantizan que:
 
 - Cada usuario solo puede leer y escribir sus propios datos, y solo si está aprobado.
+- Un dispositivo con datos antiguos (o con una versión vieja de la app) no puede sobrescribir datos más nuevos: cada guardado debe llevar la versión siguiente a la del servidor.
 - Un usuario nuevo solo puede crear su perfil como pendiente y con su email real.
 - Solo la admin puede ver las solicitudes y aprobar cuentas.
 
