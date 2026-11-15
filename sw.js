@@ -1,8 +1,9 @@
-const CACHE_NAME = 'gym-app-v12';
+const CACHE_NAME = 'gym-app-v14';
 const ASSETS = [
   './index.html',
   './styles.css',
   './app.js',
+  './plan.js',
   './manifest.json',
   './icon.svg',
   './icon-192.png'

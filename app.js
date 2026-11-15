@@ -183,6 +183,8 @@ auth.onAuthStateChanged(user => {
 function checkApproval() {
   const profileRef = db.collection('profiles').doc(currentUser.uid);
   unsubscribeProfile = profileRef.onSnapshot(doc => {
+    // Without a profile in the offline cache, wait for the server before creating one
+    if (!doc.exists && doc.metadata.fromCache) return;
     if (!doc.exists) {
       // Profile doesn't exist yet (old user or admin) - create it
       const approved = currentUser.uid === ADMIN_UID;
@@ -264,6 +266,7 @@ function listenToUserData() {
       data.trash = [];
       data.activities = [];
       data.checksDate = todayStr();
+      data.rev = 1;
       if (fromServer) docRef.set(data);
     }
 
@@ -283,9 +286,19 @@ function listenToUserData() {
   });
 }
 
+// Every save carries the next revision number, and the Firestore rules only accept
+// it if it is exactly one ahead of the server's. A device with old data (or an old
+// version of the app) can't overwrite newer data: its write is rejected and the
+// listener brings back the server version
 function saveData(d) {
   if (!currentUser) return;
-  getUserDocRef().set(d).catch(err => console.error('Save error:', err));
+  d.rev = (d.rev || 0) + 1;
+  getUserDocRef().set(d).catch(err => {
+    console.error('Save error:', err);
+    toast(err.code === 'permission-denied'
+      ? 'No se ha guardado: tus datos habían cambiado en otro dispositivo. Ya tienes la versión más reciente.'
+      : 'No se ha podido guardar. Comprueba la conexión');
+  });
 }
 
 // ============ BACKUPS ============
@@ -373,7 +386,8 @@ function openBackups() {
 // Replace the current data, keeping a copy of it first so the change can be undone
 function replaceData(newData, message) {
   return writeBackup(`${todayStr()}_antes-${Date.now()}`, data).then(() => {
-    data = Object.assign({ trash: [], activities: [] }, newData, { checksDate: todayStr() });
+    // Keep the current revision: the restored copy carries an old one
+    data = Object.assign({ trash: [], activities: [] }, newData, { checksDate: todayStr(), rev: data.rev });
     data.activeRoutine = Math.min(data.activeRoutine || 0, data.routines.length - 1);
     saveData(data);
     pruneBackups();
@@ -464,23 +478,34 @@ function render() {
   renderHeader();
   renderExercises();
   renderCalendar();
+  renderPlan();
+  renderBike();
 }
 
 // ============ VIEWS ============
 let currentView = 'routine';
 
+const VIEWS = ['routine', 'plan', 'bike', 'calendar'];
+const FAB_LABELS = { routine: 'Añadir ejercicio', plan: 'Añadir', bike: 'Registrar salida', calendar: 'Añadir entreno' };
+
 function switchView(view) {
   currentView = view;
-  document.getElementById('view-routine').hidden = view !== 'routine';
-  document.getElementById('view-calendar').hidden = view !== 'calendar';
+  VIEWS.forEach(v => { document.getElementById(`view-${v}`).hidden = v !== view; });
   document.querySelectorAll('.bottom-nav-item').forEach(b => b.classList.toggle('active', b.dataset.view === view));
-  document.getElementById('fab').setAttribute('aria-label', view === 'calendar' ? 'Añadir entreno' : 'Añadir ejercicio');
+  document.getElementById('fab').setAttribute('aria-label', FAB_LABELS[view]);
   window.scrollTo(0, 0);
   render();
 }
 
 function onFabClick() {
   if (currentView === 'calendar') openAddActivity(selectedDate);
+  else if (currentView === 'bike') openBikeLog();
+  else if (currentView === 'plan') {
+    if (planTab === 'workouts') openWorkoutEditor();
+    else if (planTab === 'goals') openGoalEditor();
+    else if (todayStr() >= plan().startDate) openPlanDay(currentWeekIndex(), (new Date().getDay() + 6) % 7 + 1);
+    else openAddActivity(todayStr());
+  }
   else openAddExercise();
 }
 
@@ -496,11 +521,50 @@ function renderNav() {
 
 const RING_LENGTH = 2 * Math.PI * 27;
 
+// This week (Monday to Sunday) with the same colored rings as the calendar
+function renderWeek() {
+  const now = new Date();
+  const monday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - (now.getDay() + 6) % 7);
+  const today = todayStr();
+  const days = getTrainingDays();
+  let trained = 0;
+  let cells = WEEKDAYS.map(w => `<span class="cal-weekday">${w}</span>`).join('');
+
+  for (let i = 0; i < 7; i++) {
+    const date = new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() + i);
+    const key = todayStrOf(date);
+    const info = days.get(key);
+    if (info) trained++;
+    const classes = ['cal-day'];
+    if (info) classes.push('trained');
+    if (key === today) classes.push('selected');
+    if (key > today) classes.push('future');
+    const style = info ? ` style="--ring:${dayRing(info.types)}"` : '';
+    cells += `<button class="${classes.join(' ')}"${style} onclick="openDayInCalendar('${key}')" aria-label="${date.getDate()} de ${MONTH_NAMES[date.getMonth()]}">${date.getDate()}</button>`;
+  }
+
+  return `
+    <div class="week-card">
+      <div class="week-head">
+        <span>Esta semana</span>
+        <span class="week-count">${trained} ${trained === 1 ? 'día entrenado' : 'días entrenados'}</span>
+      </div>
+      <div class="calendar-grid">${cells}</div>
+    </div>`;
+}
+
+function openDayInCalendar(date) {
+  const [y, m] = date.split('-').map(Number);
+  calendarMonth = new Date(y, m - 1, 1);
+  selectedDate = date;
+  switchView('calendar');
+}
+
 function renderStats() {
   const s = getStats();
   const container = document.getElementById('stats-row');
   if (!s.total) {
-    container.innerHTML = '';
+    container.innerHTML = renderWeek();
     return;
   }
   const left = s.total - s.done;
@@ -513,7 +577,7 @@ function renderStats() {
     ? 'Todo registrado por hoy'
     : `Te ${left === 1 ? 'queda 1 ejercicio' : `quedan ${left} ejercicios`} de hoy`;
 
-  container.innerHTML = `
+  container.innerHTML = renderWeek() + `
     <div class="progress-card">
       <svg class="progress-ring" viewBox="0 0 64 64" aria-hidden="true">
         <circle class="ring-track" cx="32" cy="32" r="27"/>
@@ -524,7 +588,7 @@ function renderStats() {
       <div class="progress-text">
         <span class="progress-title">${title}</span>
         <span class="progress-sub">${sub}</span>
-        <span class="progress-sub">${s.totalLogs} registros en esta rutina</span>
+        <span class="progress-sub">${s.totalLogs} ${s.totalLogs === 1 ? 'registro' : 'registros'} en esta rutina</span>
       </div>
     </div>
   `;
@@ -732,7 +796,9 @@ function restoreExercise(trashIndex) {
 }
 
 function deleteRoutine() {
-  if (confirm(`¿Eliminar "${data.routines[data.activeRoutine].name}"?`)) {
+  const routine = data.routines[data.activeRoutine];
+  const logs = routine.exercises.reduce((sum, e) => sum + e.logs.length, 0);
+  if (confirm(`¿Eliminar "${routine.name}"? Se borrarán sus ${routine.exercises.length} ejercicios y ${logs} registros.`)) {
     data.routines.splice(data.activeRoutine, 1);
     data.activeRoutine = 0;
     saveData(data);
@@ -1085,6 +1151,7 @@ function buildChart(type, labels, weights, avgReps, totalReps, unit, isNumeric) 
 
 function deleteLog(exIndex, logIndex) {
   const ex = data.routines[data.activeRoutine].exercises[exIndex];
+  if (!confirm(`¿Borrar el registro del ${formatShortDate(ex.logs[logIndex].date)}?`)) return;
   ex.logs.splice(logIndex, 1);
   saveData(data);
   openHistory(exIndex);
@@ -1332,9 +1399,10 @@ function renderDayDetail(date, info) {
         <div class="day-item">
           <span class="act-dot" style="background:${type.color}"></span>
           <div class="day-item-info">
-            <div class="day-item-title">${type.label}${a.routine ? ` · ${escapeHtml(a.routine)}` : ''}${a.minutes ? ` · ${escapeHtml(a.minutes)} min` : ''}</div>
-            ${a.notes ? `<div class="day-item-sub">${escapeHtml(a.notes)}</div>` : ''}
+            <div class="day-item-title">${type.label}${a.routine ? ` · ${escapeHtml(a.routine)}` : ''}${a.type === 'bike' && activityKm(a) ? ` · ${activityKm(a)} km` : ''}${a.minutes ? ` · ${escapeHtml(a.minutes)} min` : ''}</div>
+            ${notesWithoutKm(a.notes) ? `<div class="day-item-sub">${escapeHtml(notesWithoutKm(a.notes))}</div>` : ''}
           </div>
+          <button class="history-delete" onclick="openEditActivity(${a.index})" aria-label="Editar entreno">${ICONS.edit}</button>
           <button class="history-delete" onclick="deleteActivity(${a.index})" aria-label="Borrar entreno">${ICONS.close}</button>
         </div>`;
     });
@@ -1364,48 +1432,78 @@ function selectDay(date) {
   renderCalendar();
 }
 
+let editingActivity = null;
+
+// Old rides kept their km in the notes ("40 km · ..."); the km field now holds them
+function notesWithoutKm(notes) {
+  return String(notes || '').split('·').map(s => s.trim())
+    .filter(s => s && !/^\d+(?:[.,]\d+)?\s*km$/i.test(s)).join(' · ');
+}
+
 function openAddActivity(date) {
-  newActivityType = 'bike';
+  openActivityForm({ date: date || todayStr(), type: 'bike' }, null);
+}
+
+function openEditActivity(index) {
+  openActivityForm(data.activities[index], index);
+}
+
+function openActivityForm(a, index) {
+  editingActivity = index;
+  newActivityType = activityType(a.type);
+  const km = activityKm(a);
   const options = Object.entries(ACTIVITY_TYPES).map(([key, t]) => `
     <button type="button" class="type-option ${key === newActivityType ? 'active' : ''}" data-type="${key}" onclick="pickActivityType('${key}')">
       <span class="act-dot" style="background:${t.color}"></span>${t.label}
     </button>`).join('');
 
   openModal(`
-    <h2>Añadir entreno</h2>
+    <h2>${index === null ? 'Añadir entreno' : 'Editar entreno'}</h2>
     <div class="form-group">
       <label>Tipo</label>
       <div class="type-picker">${options}</div>
     </div>
     <div class="form-group">
       <label>Fecha</label>
-      <input type="date" id="activity-date" value="${date || todayStr()}">
+      <input type="date" id="activity-date" value="${escapeHtml(a.date)}">
+    </div>
+    <div class="form-group" id="activity-km-group" ${newActivityType === 'bike' ? '' : 'hidden'}>
+      <label>Kilómetros</label>
+      <input type="number" inputmode="decimal" step="0.1" id="activity-km" value="${km || ''}" placeholder="Ej: 32.5">
     </div>
     <div class="form-group">
       <label>Duración (min)</label>
-      <input type="number" inputmode="numeric" id="activity-minutes" placeholder="Opcional">
+      <input type="number" inputmode="numeric" id="activity-minutes" value="${a.minutes || ''}" placeholder="Opcional">
     </div>
     <div class="form-group">
       <label>Notas</label>
-      <input type="text" id="activity-notes" placeholder="Ej: 40 km, simulacro Hyrox...">
+      <input type="text" id="activity-notes" value="${escapeHtml(notesWithoutKm(a.notes))}" placeholder="Ej: viento, simulacro Hyrox...">
     </div>
     <button class="btn-primary" onclick="saveActivity()">Guardar</button>
     <button class="btn-secondary" onclick="closeModal()">Cancelar</button>
+    ${index === null ? '' : `<button class="btn-danger-full" onclick="deleteActivity(${index})">Borrar entreno</button>`}
   `);
 }
 
 function pickActivityType(key) {
   newActivityType = key;
   document.querySelectorAll('.type-option').forEach(b => b.classList.toggle('active', b.dataset.type === key));
+  document.getElementById('activity-km-group').hidden = key !== 'bike';
 }
 
 function saveActivity() {
   const date = document.getElementById('activity-date').value || todayStr();
   const minutes = parseInt(document.getElementById('activity-minutes').value) || null;
   const notes = document.getElementById('activity-notes').value.trim();
+  const km = newActivityType === 'bike'
+    ? parseFloat(document.getElementById('activity-km').value.replace(',', '.')) || null
+    : null;
+  const fields = { date, type: newActivityType, minutes, notes, km };
 
   if (!data.activities) data.activities = [];
-  data.activities.push({ date, type: newActivityType, minutes, notes });
+  // Editing keeps the other fields (routine, plan link, indoor...)
+  if (editingActivity !== null && data.activities[editingActivity]) Object.assign(data.activities[editingActivity], fields);
+  else data.activities.push(fields);
   data.activities.sort((a, b) => a.date.localeCompare(b.date));
 
   const [y, m] = date.split('-').map(Number);
@@ -1413,13 +1511,14 @@ function saveActivity() {
   selectedDate = date;
   saveData(data);
   closeModal();
-  toast('Entreno guardado');
+  toast(editingActivity !== null ? 'Entreno actualizado' : 'Entreno guardado');
 }
 
 function deleteActivity(index) {
   if (confirm('¿Borrar este entreno?')) {
     data.activities.splice(index, 1);
     saveData(data);
+    closeModal();
     toast('Entreno borrado');
   }
 }
