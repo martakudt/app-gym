@@ -22,7 +22,7 @@ const BIKE_KINDS = {
 };
 
 // ---------- Default plan ----------
-const PLAN_VERSION = 3;
+const PLAN_VERSION = 7;
 
 const WARMUP = {
   title: `Calentamiento (10')`,
@@ -40,7 +40,7 @@ const STRENGTH_WARMUP = {
   title: `Calentamiento (8')`,
   lines: [
     `Bici o remo suave · 5'`,
-    '2 rondas: 10 sentadillas al aire, 10 puentes de glúteo, 8 flexiones inclinadas',
+    '2 rondas: 10 sentadillas al aire, 10 puentes de glúteo, 10 aperturas con banda',
     '1-2 series ligeras del primer ejercicio'
   ]
 };
@@ -62,31 +62,33 @@ function defaultWorkouts() {
   const workouts = [
     {
       id: 'fb-a', name: 'Full Body A', type: 'fuerza', minutes: 55,
-      summary: 'Sentadilla, peso muerto rumano, press banca y remo',
+      summary: 'Cuádriceps y espalda: sentadilla, jalón, búlgara y remo',
       blocks: [
         STRENGTH_WARMUP,
+        // Legs and upper body alternate, so the legs rest between the two squats
         { title: 'Fuerza', lines: [
-          `Sentadilla con barra o goblet · 4 × 6-8 · desc. 2'`,
-          'Peso muerto rumano · 3 × 8-10 · desc. 90"',
-          'Press banca con mancuernas · 3 × 8-10 · desc. 90"',
-          'Remo con mancuerna a una mano · 3 × 10 por brazo · desc. 60"',
-          'Zancada atrás · 2 × 10 por pierna · desc. 60"'
+          `Sentadilla Bell · 4 × 6-8 · desc. 2'`,
+          'Jalón al pecho en polea · 3 × 8-12 · desc. 90"',
+          'Sentadilla búlgara · 3 × 8 por pierna · desc. 90"',
+          'Remo en máquina agarre prono · 3 × 10-12 · desc. 60"',
+          'Elevaciones laterales · 3 × 12-15 · desc. 60"'
         ] },
         { title: 'Core', lines: [`Plancha · 3 × 30" | ${HOW.plank}`, `Dead bug · 3 × 10 | ${HOW.deadBug}`] }
       ],
       notes: STRENGTH_NOTE
     },
     {
+      // The only heavy hinge of the week (the swing in C is light and explosive)
       id: 'fb-b', name: 'Full Body B', type: 'fuerza', minutes: 55,
-      summary: 'Peso muerto, búlgara, press militar y jalón',
+      summary: 'Glúteo, isquios y hombro: peso muerto rumano, press militar y hip thrust',
       blocks: [
         STRENGTH_WARMUP,
         { title: 'Fuerza', lines: [
-          `Peso muerto (convencional o trap bar) · 4 × 5-6 · desc. 2'`,
-          'Sentadilla búlgara · 3 × 8 por pierna · desc. 90"',
-          'Press militar con mancuernas · 3 × 8-10 · desc. 90"',
-          'Jalón al pecho o dominadas asistidas · 3 × 8-10 · desc. 90"',
-          'Hip thrust · 3 × 10 · desc. 60"'
+          `Peso muerto rumano · 3 × 8-10 · desc. 2'`,
+          'Press militar con mancuernas · 3 × 8-12 · desc. 90"',
+          'Hip thrust · 3 × 8-12 · desc. 90"',
+          'Dominadas en máquina · 3 × 8-12 · desc. 90"',
+          'Curl femoral tumbado · 3 × 10-12 · desc. 60"'
         ] },
         { title: 'Core', lines: [`Farmer carry · 3 × 30 m | ${HOW.farmer}`, `Pallof press · 3 × 10 por lado | ${HOW.pallof}`] }
       ],
@@ -94,15 +96,16 @@ function defaultWorkouts() {
     },
     {
       id: 'fb-c', name: 'Full Body C', type: 'fuerza', minutes: 50,
-      summary: 'Más atlética: thruster, swing, step-up y flexiones',
+      summary: 'Más atlética: swing, thruster, remo en T y step-up',
       blocks: [
         STRENGTH_WARMUP,
+        // Explosive work first, while fresh
         { title: 'Fuerza', lines: [
+          'Kettlebell swing (ligero y explosivo) · 4 × 15 · desc. 60"',
           'Thruster con mancuernas · 4 × 8 · desc. 90"',
-          'Kettlebell swing · 4 × 15 · desc. 60"',
+          'Remo en T prono · 3 × 10 · desc. 60"',
           'Step-up al cajón con mancuernas · 3 × 8 por pierna · desc. 60"',
-          'Flexiones (en banco si cuesta) · 3 × 8-12 · desc. 60"',
-          'Remo invertido o en TRX · 3 × 10 · desc. 60"'
+          'Abductor + aductor en máquina · 2 × 15 cada uno · desc. 60"'
         ] },
         { title: 'Core', lines: [`Hollow hold · 3 × 20-30" | ${HOW.hollow}`, `Plancha lateral · 3 × 20-30" por lado | ${HOW.sidePlank}`] }
       ],
@@ -214,7 +217,7 @@ function defaultWorkouts() {
           'Desayuna bien y prueba la comida en salidas cortas, no el día del objetivo'
         ] },
         { title: 'En invierno', lines: [
-          'Mira la previsión: si llueve el sábado, prueba el domingo o haz el Plan B en la bici estática',
+          'Mira la previsión: si llueve el día de la salida, prueba el día siguiente o haz el Plan B en la bici estática',
           'Capas: térmica, cortavientos, guantes y cubrebotas',
           'Luces delante y detrás: anochece pronto'
         ] }
@@ -225,7 +228,7 @@ function defaultWorkouts() {
       id: 'bike-easy', name: 'Salida suave', type: 'bici', minutes: 60, optional: true,
       summary: '15-25 km muy suaves para soltar piernas',
       blocks: [
-        { title: 'Cómo hacerla', lines: ['15-25 km a ritmo muy suave', 'Si el sábado fue muy largo o hace mal tiempo, mejor descansa'] }
+        { title: 'Cómo hacerla', lines: ['15-25 km a ritmo muy suave', 'Si la salida larga te dejó muy cansada o hace mal tiempo, mejor descansa'] }
       ],
       notes: ''
     },
@@ -306,7 +309,7 @@ function defaultWeeks() {
     if (i === 30) {
       days = { 1: 'fb-b', 2: 'r4', 4: 'mov' };
       deload = true;
-      note = 'Semana suave antes del objetivo: llega fresca al sábado que viene.';
+      note = 'Semana suave antes del objetivo: llega fresca a la salida del objetivo.';
     }
     if (i === 31) {
       days = { 1: 'fb-a', 2: 'r4', 4: 'mov' };
@@ -363,12 +366,53 @@ function plan() {
   if (!Array.isArray(p.skipped)) p.skipped = [];
   if (!Array.isArray(p.goals)) p.goals = [];
   if (!Array.isArray(p.phases)) p.phases = [];
+  // Weekday (1 = Monday ... 7 = Sunday) of the long and the easy ride
+  if (!p.longDay) p.longDay = 6;
+  if (!p.easyDay) p.easyDay = 7;
   if ((p.version || 1) < PLAN_VERSION) migratePlan(p);
   return p;
 }
 
+// Weekday of the long ride in week i (the chosen day if that week has none)
+function longRideWd(i) {
+  const days = plan().weeks[i].days;
+  const wd = Object.keys(days).map(Number).find(d => LONG_RIDE_IDS.includes(days[d]));
+  return wd || plan().longDay;
+}
+
+// Move a workout to another weekday; whatever was there takes its old place
+function moveWorkoutTo(days, test, target) {
+  const from = Object.keys(days).map(Number).find(d => test(days[d]));
+  if (!from || from === target) return;
+  const id = days[from];
+  const displaced = days[target];
+  delete days[from];
+  days[target] = id;
+  if (displaced) days[from] = displaced;
+}
+
+function applyRideDays(fromWeek) {
+  const p = plan();
+  p.weeks.forEach((week, i) => {
+    if (i < fromWeek) return;
+    // A workout already marked as done or skipped stays on its day (its mark is
+    // tied to that date): neither moved nor swapped out by another one
+    const settledDay = wd => wd && ['done', 'skipped'].includes(dayStatus(i, wd));
+    const dayOf = test => Object.keys(week.days).map(Number).find(d => test(week.days[d]));
+    const move = (test, target) => {
+      if (settledDay(dayOf(test)) || settledDay(target)) return;
+      moveWorkoutTo(week.days, test, target);
+    };
+    move(id => LONG_RIDE_IDS.includes(id), p.longDay);
+    move(id => id === 'bike-easy', p.easyDay);
+  });
+}
+
 // v2: stationary bike instead of a trainer, longer mobility, how-to for each
-// exercise. v3: calf stretch against the wall.
+// exercise. v3: calf stretch against the wall. v4: Full Body A/B/C with her own
+// exercises, one heavy hinge a week (RDL on B) and no chest work. v5: legs and
+// upper body alternate within each Full Body. v6: ride texts no longer assume
+// Saturday (the ride days can be chosen). v7: warm-up without push-ups.
 // Default workouts never edited by hand get the new content.
 function migratePlan(p) {
   const fresh = defaultWorkouts();
@@ -577,7 +621,7 @@ function renderPlanWeek() {
   const start = weekStart(i);
   const end = weekEnd(i);
   const today = todayStr();
-  const phaseIdx = phaseIndexFor(weekDate(i, 6));
+  const phaseIdx = phaseIndexFor(weekDate(i, longRideWd(i)));
   const phase = p.phases[phaseIdx];
 
   let planned = 0;
@@ -642,6 +686,7 @@ function renderPlanWeek() {
       </button>
       <button class="btn-icon" onclick="changePlanWeek(1)" ${i === p.weeks.length - 1 ? 'disabled' : ''} aria-label="Semana siguiente">${ICONS.chevronRight}</button>
     </div>
+    ${renderWeek(start)}
     <div class="plan-days">${rows}</div>
     <p class="plan-hint">Pulsa un día para ver el entreno, marcarlo como hecho o cambiarlo.</p>`;
 }
@@ -685,6 +730,44 @@ function openPlanDay(i, wd) {
   `);
 }
 
+// ---------- Strength logs ----------
+// The weights of a plan strength workout are kept in a routine with the same name
+// (so they show in Rutina, its history and its charts). Exercises are matched by
+// name across all routines to find the last time each one was done.
+function normName(name) {
+  return String(name).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/\(.*?\)/g, '').replace(/\s+/g, ' ').trim();
+}
+
+// Exercises with sets in the "Fuerza" block of a strength workout
+function workoutExercises(w) {
+  if (!w || w.type !== 'fuerza') return [];
+  const out = [];
+  (w.blocks || []).filter(b => /fuerza/i.test(b.title || '')).forEach(b => (b.lines || []).forEach(line => {
+    const { parts } = splitLine(line);
+    const match = (parts[1] || '').match(/^(\d+)\s*[x×]\s*(.+)$/);
+    if (match) out.push({ name: parts[0].trim(), sets: parseInt(match[1]), reps: match[2].trim() });
+  }));
+  return out;
+}
+
+function lastLogFor(name) {
+  const key = normName(name);
+  let best = null;
+  data.routines.forEach(r => r.exercises.forEach(ex => {
+    if (normName(ex.name) !== key) return;
+    ex.logs.forEach(log => {
+      if (!best || log.date > best.log.date) best = { log, unit: ex.unit || 'kg' };
+    });
+  }));
+  return best;
+}
+
+function lastLogText(name) {
+  const last = lastLogFor(name);
+  return last ? `Última vez · ${formatShortDate(last.log.date)} · ${formatLogDetail(last.log, last.unit)}` : '';
+}
+
 function openPlanDone(i, wd) {
   const id = plan().weeks[i].days[wd];
   const w = workoutById(id);
@@ -694,12 +777,40 @@ function openPlanDone(i, wd) {
     openBikeLog(date, id);
     return;
   }
+
+  // Strength: one row per set, with last time's weights already filled in
+  const exercises = workoutExercises(w);
+  const exHtml = exercises.map((ex, k) => {
+    const last = lastLogFor(ex.name);
+    let rows = '';
+    for (let s = 0; s < ex.sets; s++) {
+      const prev = last ? (last.log.weights ? (last.log.weights[s] ?? last.log.weights[0]) : last.log.weight) : '';
+      rows += `
+        <div class="series-row">
+          <span class="series-label">Serie ${s + 1}</span>
+          <input type="number" inputmode="decimal" step="0.5" placeholder="kg" id="plw-${k}-${s}" value="${escapeHtml(prev ?? '')}" class="series-weight">
+          <span class="series-x">×</span>
+          <input type="number" inputmode="numeric" placeholder="${escapeHtml(ex.reps.split(' ')[0])}" id="plr-${k}-${s}" class="series-reps">
+        </div>`;
+    }
+    return `
+      <div class="plan-log-ex">
+        <div class="plan-log-name">${escapeHtml(ex.name)}<small>${ex.sets} × ${escapeHtml(ex.reps)}</small></div>
+        <div class="workout-last">${last ? lastLogText(ex.name) : 'Primera vez: elige un peso cómodo'}</div>
+        <div class="series-header"><span></span><span>Peso (kg)</span><span></span><span>Reps</span></div>
+        ${rows}
+      </div>`;
+  }).join('');
+
   openModal(`
     <h2>${escapeHtml(w.name)}</h2>
     <div class="form-group">
       <label>Fecha</label>
       <input type="date" id="plan-done-date" value="${date}">
     </div>
+    ${exercises.length ? `
+      <p class="modal-text">Apunta las repeticiones de cada serie. El peso viene de la última vez: cámbialo si has usado otro. Las series que dejes sin reps no se guardan.</p>
+      ${exHtml}` : ''}
     <div class="form-group">
       <label>Duración (min)</label>
       <input type="number" inputmode="numeric" id="plan-done-minutes" value="${w.minutes || ''}" placeholder="Opcional">
@@ -713,14 +824,55 @@ function openPlanDone(i, wd) {
   `);
 }
 
+// Adds the logged sets to the routine named like the workout (created if needed)
+function saveWorkoutLogs(w, date) {
+  const exercises = workoutExercises(w);
+  let routine = null;
+  let saved = 0;
+  exercises.forEach((ex, k) => {
+    const weights = [];
+    const reps = [];
+    for (let s = 0; s < ex.sets; s++) {
+      const weight = parseFloat(valueOf(`plw-${k}-${s}`).replace(',', '.'));
+      const rep = parseInt(valueOf(`plr-${k}-${s}`));
+      if (rep > 0) {
+        // A set without weight repeats the previous set's
+        weights.push(Number.isFinite(weight) ? weight : (weights.length ? weights[weights.length - 1] : 0));
+        reps.push(rep);
+      }
+    }
+    if (!reps.length) return;
+    if (!routine) {
+      routine = data.routines.find(r => r.name === w.name);
+      if (!routine) {
+        routine = { name: w.name, exercises: [] };
+        data.routines.push(routine);
+      }
+    }
+    let target = routine.exercises.find(e => normName(e.name) === normName(ex.name));
+    if (!target) {
+      target = { name: ex.name, sets: ex.sets, reps: ex.reps, weight: 0, unit: 'kg', done: false, logs: [] };
+      routine.exercises.push(target);
+    }
+    target.logs.push({ date, weights, reps });
+    target.logs.sort((a, b) => a.date.localeCompare(b.date));
+    target.weight = weights[0];
+    if (date === todayStr()) target.done = true;
+    saved++;
+  });
+  return saved;
+}
+
 function savePlanDone(i, wd) {
   const id = plan().weeks[i].days[wd];
   const w = workoutById(id);
   if (!w) return;
   const planned = weekDate(i, wd);
+  const date = valueOf('plan-done-date') || planned;
+  const saved = w.type === 'fuerza' ? saveWorkoutLogs(w, date) : 0;
   // The calendar gets the real date; planDate ties it to the planned day
   pushActivity({
-    date: valueOf('plan-done-date') || planned,
+    date,
     type: PLAN_TYPES[w.type].activity,
     minutes: parseInt(valueOf('plan-done-minutes')) || null,
     notes: valueOf('plan-done-notes'),
@@ -731,14 +883,19 @@ function savePlanDone(i, wd) {
   unskip(i, wd, id);
   saveData(data);
   closeModal();
-  toast('¡Entreno hecho!');
+  toast(saved ? `¡Entreno hecho! Pesos guardados en la rutina "${w.name}"` : '¡Entreno hecho!');
 }
 
 function undoPlanDone(i, wd) {
   const id = plan().weeks[i].days[wd];
   const index = findPlanActivity(i, wd, id);
   if (index < 0) return;
-  if (!confirm('¿Quitar el "hecho"? También se borra del calendario.')) return;
+  const w = workoutById(id);
+  const a = data.activities[index];
+  const routine = w && data.routines.find(r => r.name === w.name);
+  const logged = routine ? routine.exercises.filter(e => e.logs.some(l => l.date === a.date)) : [];
+  if (!confirm(`¿Quitar el "hecho"? También se borra del calendario${logged.length ? ' y se borran los pesos que apuntaste ese día' : ''}.`)) return;
+  logged.forEach(e => { e.logs = e.logs.filter(l => l.date !== a.date); });
   data.activities.splice(index, 1);
   saveData(data);
   closeModal();
@@ -833,7 +990,10 @@ function workoutBody(w) {
   const blocks = (w.blocks || []).map(b => `
     <div class="workout-block">
       ${b.title ? `<div class="workout-block-title">${escapeHtml(b.title)}</div>` : ''}
-      <ul>${(b.lines || []).map(l => `<li>${formatLine(l)}</li>`).join('')}</ul>
+      <ul>${(b.lines || []).map(l => {
+        const last = w.type === 'fuerza' && /fuerza/i.test(b.title || '') ? lastLogText(splitLine(l).parts[0]) : '';
+        return `<li>${formatLine(l)}${last ? `<span class="workout-last">${last}</span>` : ''}</li>`;
+      }).join('')}</ul>
     </div>`).join('');
   return `
     <div class="workout-body">
@@ -1137,6 +1297,8 @@ function renderPlanGoals() {
     <div class="plan-section">
       <div class="plan-section-row"><span class="report-title">Ajustes del plan</span></div>
       <p class="plan-hint left">Empieza el ${longDate(p.startDate)} · ${p.weeks.length} semanas, hasta el ${longDate(weekEnd(p.weeks.length - 1))}.</p>
+      <p class="plan-hint left">Salida larga los ${weekdayPlural(p.longDay)} · salida suave los ${weekdayPlural(p.easyDay)}.</p>
+      <button class="btn-secondary" onclick="openRideDays()">Cambiar días de bici</button>
       <button class="btn-secondary" onclick="openPlanSettings()">Cambiar fecha de inicio</button>
       <button class="btn-secondary" onclick="addPlanBlock()">Añadir 4 semanas al final</button>
       <button class="btn-danger-full" onclick="resetPlan()">Restablecer el plan original</button>
@@ -1409,6 +1571,48 @@ function savePlanSettings() {
   toast(`El plan empieza el ${formatShortDate(start)}`);
 }
 
+// "los lunes", "los sábados"
+function weekdayPlural(wd) {
+  const name = PLAN_WEEKDAYS[wd - 1].toLowerCase();
+  return name.endsWith('s') ? name : name + 's';
+}
+
+function openRideDays() {
+  const p = plan();
+  const options = selected => PLAN_WEEKDAYS.map((name, k) =>
+    `<option value="${k + 1}" ${k + 1 === selected ? 'selected' : ''}>${name}</option>`).join('');
+  openModal(`
+    <h2>Días de bici</h2>
+    <p class="modal-text">Las salidas se mueven a estos días desde esta semana en adelante. Si ese día había otro entreno, pasa al día que deja libre la salida.</p>
+    <div class="form-group">
+      <label>Salida larga</label>
+      <select id="ride-long-day">${options(p.longDay)}</select>
+    </div>
+    <div class="form-group">
+      <label>Salida suave</label>
+      <select id="ride-easy-day">${options(p.easyDay)}</select>
+    </div>
+    <button class="btn-primary" onclick="saveRideDays()">Guardar</button>
+    <button class="btn-secondary" onclick="closeModal()">Cancelar</button>
+  `);
+}
+
+function saveRideDays() {
+  const longDay = parseInt(valueOf('ride-long-day'));
+  const easyDay = parseInt(valueOf('ride-easy-day'));
+  if (longDay === easyDay) {
+    toast('Elige días distintos para cada salida');
+    return;
+  }
+  const p = plan();
+  p.longDay = longDay;
+  p.easyDay = easyDay;
+  applyRideDays(todayStr() >= p.startDate ? currentWeekIndex() : 0);
+  saveData(data);
+  closeModal();
+  toast(`Salida larga los ${weekdayPlural(longDay)}`);
+}
+
 function addPlanBlock() {
   const p = plan();
   const lastBlock = p.weeks.slice(-4);
@@ -1418,7 +1622,7 @@ function addPlanBlock() {
     copy.km = k === 3 ? Math.round(maxKm * 0.65) : maxKm;
     copy.deload = k === 3;
     copy.note = copy.deload ? 'Semana de descarga: 1 serie menos, un 20 % menos de peso y los híbridos a 6/10.' : '';
-    if (!copy.deload) copy.days[6] = 'bike-long';
+    if (!copy.deload && !Object.values(copy.days).some(id => LONG_RIDE_IDS.includes(id))) copy.days[p.longDay] = 'bike-long';
     p.weeks.push(copy);
   });
   saveData(data);
@@ -1427,13 +1631,85 @@ function addPlanBlock() {
 
 function resetPlan() {
   if (!confirm('¿Volver al plan original? Se pierden tus cambios en entrenos, semanas, fases y objetivos. Lo que hayas apuntado en el calendario se mantiene.')) return;
+  // The chosen bike days are a preference, not a plan change: keep them
+  const { longDay, easyDay } = plan();
   data.plan = defaultPlan();
+  Object.assign(data.plan, { longDay, easyDay });
+  applyRideDays(0);
   planWeekIndex = null;
   saveData(data);
   toast('Plan restablecido');
 }
 
 // ============ RENDER: BIKE VIEW ============
+// ---------- Bike km totals ----------
+let bikeKmView = 'week';
+
+function roundKm(km) {
+  return Math.round(km * 10) / 10;
+}
+
+// Total km and number of rides between two dates (both included)
+function bikeTotals(from, to) {
+  const rides = bikeRides().filter(a => a.date >= from && a.date <= to);
+  return { km: roundKm(rides.reduce((sum, a) => sum + a.kmValue, 0)), rides: rides.length };
+}
+
+function switchBikeKm(view) {
+  bikeKmView = view;
+  renderBike();
+}
+
+function renderBikeKm() {
+  const now = new Date();
+  const monday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - (now.getDay() + 6) % 7);
+  const addDays = (d, n) => new Date(d.getFullYear(), d.getMonth(), d.getDate() + n);
+  const week = bikeTotals(todayStrOf(monday), todayStrOf(addDays(monday, 6)));
+  const month = bikeTotals(todayStrOf(new Date(now.getFullYear(), now.getMonth(), 1)), todayStrOf(new Date(now.getFullYear(), now.getMonth() + 1, 0)));
+  const rideCount = n => `${n} ${n === 1 ? 'salida' : 'salidas'}`;
+
+  // Last 8 weeks or last 6 months, oldest first
+  const periods = bikeKmView === 'week'
+    ? Array.from({ length: 8 }, (_, k) => {
+        const start = addDays(monday, (k - 7) * 7);
+        return { label: formatShortDate(todayStrOf(start)), title: `Semana del ${formatShortDate(todayStrOf(start))}`, ...bikeTotals(todayStrOf(start), todayStrOf(addDays(start, 6))) };
+      })
+    : Array.from({ length: 6 }, (_, k) => {
+        const start = new Date(now.getFullYear(), now.getMonth() + k - 5, 1);
+        const end = new Date(start.getFullYear(), start.getMonth() + 1, 0);
+        const name = MONTH_NAMES[start.getMonth()];
+        return { label: name.slice(0, 3), title: `${name} ${start.getFullYear()}`, ...bikeTotals(todayStrOf(start), todayStrOf(end)) };
+      });
+  // Headroom so the tallest bar still fits its total above it
+  const max = Math.max(1, ...periods.map(x => x.km)) * 1.2;
+
+  const columns = periods.map((x, k) => {
+    const label = `${x.title}: ${x.km} km, ${rideCount(x.rides)}`;
+    return `
+      <div class="month-col ${k === periods.length - 1 ? 'current' : ''}" title="${escapeHtml(label)}" aria-label="${escapeHtml(label)}">
+        <span class="month-col-plot">
+          ${x.km ? `<span class="month-col-seg" style="height:calc(${(x.km / max * 100).toFixed(1)}% - 2px);background:${ACTIVITY_TYPES.bike.color}"></span>` : ''}
+          <span class="month-col-total">${x.km || ''}</span>
+        </span>
+        <span class="month-col-label">${escapeHtml(x.label)}</span>
+      </div>`;
+  }).join('');
+
+  return `
+    <div class="plan-section">
+      <div class="plan-section-row"><span class="report-title">Kilómetros</span></div>
+      <div class="bike-km-tiles">
+        <div class="bike-km-tile"><span>Esta semana</span><b>${week.km}<small>km</small></b><span>${rideCount(week.rides)}</span></div>
+        <div class="bike-km-tile"><span>Este mes</span><b>${month.km}<small>km</small></b><span>${rideCount(month.rides)}</span></div>
+      </div>
+      <div class="chart-tabs">
+        <button class="chart-tab ${bikeKmView === 'week' ? 'active' : ''}" onclick="switchBikeKm('week')">Por semanas</button>
+        <button class="chart-tab ${bikeKmView === 'month' ? 'active' : ''}" onclick="switchBikeKm('month')">Por meses</button>
+      </div>
+      <div class="month-chart ${bikeKmView === 'week' ? 'eight' : ''}">${columns}</div>
+    </div>`;
+}
+
 function renderBike() {
   const container = document.getElementById('bike');
   if (!container || !data) return;
@@ -1465,7 +1741,8 @@ function renderBike() {
   let rows = '';
   let lastPhase = -2;
   p.weeks.forEach((w, i) => {
-    const sat = weekDate(i, 6);
+    const rideWd = longRideWd(i);
+    const sat = weekDate(i, rideWd);
     const ph = phaseIndexFor(sat);
     if (ph !== lastPhase) {
       lastPhase = ph;
@@ -1477,7 +1754,7 @@ function renderBike() {
     const hasGoal = p.goals.some(g => g.km && g.date >= weekStart(i) && g.date <= weekEnd(i));
     rows += `
       <button class="bike-week ${i === current && today >= p.startDate ? 'current' : ''} ${weekEnd(i) < today ? 'past' : ''}" onclick="openBikeWeek(${i})">
-        <span class="bike-week-name">S${i + 1}${hasGoal ? ICONS.trophy : ''}<small>sáb ${formatShortDate(sat)}${w.deload ? ' · descarga' : ''}</small></span>
+        <span class="bike-week-name">S${i + 1}${hasGoal ? ICONS.trophy : ''}<small>${PLAN_WEEKDAYS[rideWd - 1].slice(0, 3).toLowerCase()} ${formatShortDate(sat)}${w.deload ? ' · descarga' : ''}</small></span>
         <span class="bike-week-target">${w.km} km</span>
         <span class="bike-week-done ${hit ? 'hit' : ''}">${actual ? `${actual} km` : '—'}</span>
       </button>`;
@@ -1503,6 +1780,7 @@ function renderBike() {
       <div class="report-subtitle">Salida larga: objetivo y hecho</div>
       <div class="chart-container"><canvas id="bike-chart"></canvas></div>
     </div>
+    ${renderBikeKm()}
     <div class="plan-section">
       <div class="plan-section-row"><span class="report-title">Últimas salidas</span></div>
       <div class="plan-stack">${ridesHtml}</div>
@@ -1609,7 +1887,7 @@ function openBikeWeek(i) {
           <button class="history-delete" onclick="openEditActivity(${a.index})" aria-label="Editar salida">${ICONS.edit}</button>
         </div>`).join('')}</div>` : ''}
     <button class="btn-primary" onclick="saveBikeWeek(${i})">Guardar</button>
-    <button class="btn-secondary" onclick="openBikeLog('${weekDate(i, 6)}')">Registrar salida de esta semana</button>
+    <button class="btn-secondary" onclick="openBikeLog('${weekDate(i, longRideWd(i))}')">Registrar salida de esta semana</button>
     <button class="btn-secondary" onclick="goToPlanWeek(${i}); closeModal()">Ver la semana en el plan</button>
     <button class="btn-secondary" onclick="closeModal()">Cancelar</button>
   `);
