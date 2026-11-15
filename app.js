@@ -471,15 +471,17 @@ function getStats() {
 }
 
 // ============ RENDER ============
+// Each part is drawn on its own: if one fails, the rest of the app still shows
 function render() {
   if (!data) return;
-  renderNav();
-  renderStats();
-  renderHeader();
-  renderExercises();
-  renderCalendar();
-  renderPlan();
-  renderBike();
+  [renderNav, renderStats, renderHeader, renderExercises, renderCalendar, renderPlan, renderBike].forEach(fn => {
+    try {
+      fn();
+    } catch (err) {
+      console.error(`Error en ${fn.name}:`, err);
+      toast(`Error al mostrar ${fn.name}: ${err.message}`);
+    }
+  });
 }
 
 // ============ VIEWS ============
@@ -521,11 +523,17 @@ function renderNav() {
 
 const RING_LENGTH = 2 * Math.PI * 27;
 
-// This week (Monday to Sunday) with the same colored rings as the calendar
-function renderWeek() {
+// One week (Monday to Sunday) with the same colored rings as the calendar.
+// Shown in the plan for the week being viewed; defaults to the current week
+function renderWeek(mondayKey) {
   const now = new Date();
-  const monday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - (now.getDay() + 6) % 7);
+  let monday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - (now.getDay() + 6) % 7);
+  if (mondayKey) {
+    const [y, m, d] = mondayKey.split('-').map(Number);
+    monday = new Date(y, m - 1, d);
+  }
   const today = todayStr();
+  const isThisWeek = todayStrOf(monday) <= today && today <= todayStrOf(new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() + 6));
   const days = getTrainingDays();
   let trained = 0;
   let cells = WEEKDAYS.map(w => `<span class="cal-weekday">${w}</span>`).join('');
@@ -546,7 +554,7 @@ function renderWeek() {
   return `
     <div class="week-card">
       <div class="week-head">
-        <span>Esta semana</span>
+        <span>${isThisWeek ? 'Esta semana' : `Semana del ${formatShortDate(todayStrOf(monday))}`}</span>
         <span class="week-count">${trained} ${trained === 1 ? 'día entrenado' : 'días entrenados'}</span>
       </div>
       <div class="calendar-grid">${cells}</div>
@@ -564,7 +572,7 @@ function renderStats() {
   const s = getStats();
   const container = document.getElementById('stats-row');
   if (!s.total) {
-    container.innerHTML = renderWeek();
+    container.innerHTML = '';
     return;
   }
   const left = s.total - s.done;
@@ -577,7 +585,7 @@ function renderStats() {
     ? 'Todo registrado por hoy'
     : `Te ${left === 1 ? 'queda 1 ejercicio' : `quedan ${left} ejercicios`} de hoy`;
 
-  container.innerHTML = renderWeek() + `
+  container.innerHTML = `
     <div class="progress-card">
       <svg class="progress-ring" viewBox="0 0 64 64" aria-hidden="true">
         <circle class="ring-track" cx="32" cy="32" r="27"/>
@@ -1383,7 +1391,11 @@ function renderDayDetail(date, info) {
 
   let items = '';
   if (info) {
+    // A gym workout marked in the plan whose weights were also logged shows once,
+    // as the plan entry (editable) with the logged exercises underneath
+    const markedRoutines = new Set(info.activities.filter(a => a.type === 'gym' && a.routine).map(a => a.routine));
     info.gym.forEach((exercises, routineName) => {
+      if (markedRoutines.has(routineName)) return;
       items += `
         <div class="day-item">
           <span class="act-dot" style="background:${ACTIVITY_TYPES.gym.color}"></span>
@@ -1395,12 +1407,14 @@ function renderDayDetail(date, info) {
     });
     info.activities.forEach(a => {
       const type = ACTIVITY_TYPES[activityType(a.type)];
+      const logged = a.type === 'gym' && a.routine && info.gym.has(a.routine) ? [...new Set(info.gym.get(a.routine))] : [];
+      const sub = [logged.join(', '), notesWithoutKm(a.notes)].filter(Boolean).join(' · ');
       items += `
         <div class="day-item">
           <span class="act-dot" style="background:${type.color}"></span>
           <div class="day-item-info">
             <div class="day-item-title">${type.label}${a.routine ? ` · ${escapeHtml(a.routine)}` : ''}${a.type === 'bike' && activityKm(a) ? ` · ${activityKm(a)} km` : ''}${a.minutes ? ` · ${escapeHtml(a.minutes)} min` : ''}</div>
-            ${notesWithoutKm(a.notes) ? `<div class="day-item-sub">${escapeHtml(notesWithoutKm(a.notes))}</div>` : ''}
+            ${sub ? `<div class="day-item-sub">${escapeHtml(sub)}</div>` : ''}
           </div>
           <button class="history-delete" onclick="openEditActivity(${a.index})" aria-label="Editar entreno">${ICONS.edit}</button>
           <button class="history-delete" onclick="deleteActivity(${a.index})" aria-label="Borrar entreno">${ICONS.close}</button>

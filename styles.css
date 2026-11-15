@@ -1764,6 +1764,48 @@ select:focus-visible {
   color: var(--text-muted);
 }
 
+/* Last time an exercise was done (plan workouts) */
+.workout-last {
+  display: inline-block;
+  margin-top: 4px;
+  padding: 3px 8px;
+  border-radius: 7px;
+  background: var(--bg-input);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+li .workout-last { display: table; }
+
+/* Logging the sets of a plan strength workout */
+.plan-log-ex {
+  padding: 12px;
+  margin-bottom: 10px;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+}
+
+.plan-log-name {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.plan-log-name small {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.plan-log-ex .workout-last { margin: 6px 0 10px; }
+.plan-log-ex .series-row:last-child { margin-bottom: 0; }
+
 .modal-actions {
   display: flex;
   flex-direction: column;
@@ -2279,3 +2321,40 @@ img.login-logo {
     animation: none !important;
   }
 }
+
+/* Bike km totals */
+.bike-km-tiles {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.bike-km-tile {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 12px;
+  border-radius: 14px;
+  background: var(--bg-input);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+
+.bike-km-tile b {
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
+.bike-km-tile b small {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-muted);
+  margin-left: 3px;
+}
+
+.month-chart.eight { grid-template-columns: repeat(8, 1fr); gap: 5px; }
+.month-chart.eight .month-col-label { font-size: 9.5px; white-space: nowrap; }
