@@ -699,6 +699,7 @@ function renderPlanWeek() {
     </div>
     ${renderWeek(start)}
     <div class="plan-days">${rows}</div>
+    <button class="btn-secondary organize-btn" onclick="openOrganizeWeek(${i})">Organizar la semana</button>
     <p class="plan-hint">Pulsa un día para ver el entreno, marcarlo como hecho o cambiarlo.</p>`;
 }
 
@@ -734,6 +735,7 @@ function openPlanDay(i, wd) {
     if (id === 'bike-long') actions += `<button class="btn-secondary" onclick="swapToIndoor(${i}, ${wd})">Llueve: cambiar por bici estática</button>`;
     actions += `<button class="btn-secondary" onclick="toggleSkip(${i}, ${wd})">${status === 'skipped' ? 'Quitar "saltado"' : 'Saltar este día'}</button>`;
   }
+  actions += `<button class="btn-secondary" onclick="openOrganizeWeek(${i})">Organizar la semana</button>`;
   actions += `<button class="btn-secondary" onclick="openChangeWorkout(${i}, ${wd})">Cambiar entreno</button>`;
 
   openModal(`
@@ -909,6 +911,65 @@ function swapToIndoor(i, wd) {
   saveData(data);
   openPlanDay(i, wd);
   toast('Cambiado por bici estática');
+}
+
+// Organize a week by hand: each day gets the workout chosen for it, nothing moves on its own
+function openOrganizeWeek(i) {
+  const p = plan();
+  const week = p.weeks[i];
+  const weekIds = [...new Set(Object.values(week.days))];
+  const others = p.workouts.filter(w => !weekIds.includes(w.id));
+
+  const rows = [1, 2, 3, 4, 5, 6, 7].map(wd => {
+    const current = week.days[wd] || '';
+    const status = dayStatus(i, wd);
+    // Done or skipped days keep their workout (their mark is tied to that date)
+    const locked = ['done', 'skipped'].includes(status);
+    const option = (id, label) => `<option value="${id}" ${id === current ? 'selected' : ''}>${escapeHtml(label)}</option>`;
+    return `
+      <div class="organize-row">
+        <span class="organize-day">${PLAN_WEEKDAYS[wd - 1]}<small>${formatShortDate(weekDate(i, wd))}${locked ? ` · ${status === 'done' ? 'hecho' : 'saltado'}` : ''}</small></span>
+        <select id="organize-${wd}" ${locked ? 'disabled' : ''}>
+          ${option('', 'Descanso')}
+          <optgroup label="De esta semana">${weekIds.map(id => option(id, workoutById(id) ? workoutById(id).name : id)).join('')}</optgroup>
+          ${others.length ? `<optgroup label="Otros entrenos">${others.map(w => option(w.id, w.name)).join('')}</optgroup>` : ''}
+        </select>
+      </div>`;
+  }).join('');
+
+  openModal(`
+    <div class="modal-kicker">Semana ${i + 1} · ${formatShortDate(weekStart(i))} – ${formatShortDate(weekEnd(i))}</div>
+    <h2>Organizar la semana</h2>
+    <p class="modal-text">Elige qué haces cada día. No se mueve nada solo: lo que dejes aquí es lo que queda.</p>
+    <div class="organize-list">${rows}</div>
+    <button class="btn-primary" onclick="saveOrganizeWeek(${i})">Guardar</button>
+    <button class="btn-secondary" onclick="closeModal()">Cancelar</button>
+  `);
+}
+
+function saveOrganizeWeek(i) {
+  const week = plan().weeks[i];
+  const days = {};
+  for (let wd = 1; wd <= 7; wd++) {
+    const select = document.getElementById(`organize-${wd}`);
+    const id = select.disabled ? week.days[wd] : select.value;
+    if (id) days[wd] = id;
+  }
+  const before = Object.values(week.days);
+  const after = Object.values(days);
+  const removed = [...new Set(before.filter(id => !after.includes(id)))];
+  if (removed.length) {
+    const names = removed.map(id => (workoutById(id) || { name: id }).name).join(', ');
+    if (!confirm(`${names} no está en ningún día y se quitará de esta semana. ¿Guardar así?`)) return;
+  }
+  // "Skipped" marks belong to the old days
+  for (let wd = 1; wd <= 7; wd++) {
+    if (week.days[wd] && week.days[wd] !== days[wd]) unskip(i, wd, week.days[wd]);
+  }
+  week.days = days;
+  saveData(data);
+  closeModal();
+  toast('Semana organizada');
 }
 
 function openChangeWorkout(i, wd) {

@@ -2332,3 +2332,48 @@ img.login-logo {
 
 .month-chart.eight { grid-template-columns: repeat(8, 1fr); gap: 5px; }
 .month-chart.eight .month-col-label { font-size: 9.5px; white-space: nowrap; }
+
+/* Organize a plan week by hand */
+.organize-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.organize-row {
+  display: grid;
+  grid-template-columns: 96px 1fr;
+  align-items: center;
+  gap: 10px;
+}
+
+.organize-day {
+  display: flex;
+  flex-direction: column;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.organize-day small {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.organize-row select {
+  width: 100%;
+  min-width: 0;
+  padding: 11px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--bg-input);
+  color: var(--text);
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.organize-row select:disabled { opacity: 0.55; }
+
+.organize-btn { margin: 4px 16px 0; width: calc(100% - 32px); }
