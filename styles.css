@@ -1779,32 +1779,6 @@ select:focus-visible {
 
 li .workout-last { display: table; }
 
-/* Logging the sets of a plan strength workout */
-.plan-log-ex {
-  padding: 12px;
-  margin-bottom: 10px;
-  border-radius: 14px;
-  border: 1px solid var(--border);
-}
-
-.plan-log-name {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 8px;
-  font-size: 15px;
-  font-weight: 800;
-}
-
-.plan-log-name small {
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--text-muted);
-  flex-shrink: 0;
-}
-
-.plan-log-ex .workout-last { margin: 6px 0 10px; }
-.plan-log-ex .series-row:last-child { margin-bottom: 0; }
 
 .modal-actions {
   display: flex;

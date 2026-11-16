@@ -513,8 +513,10 @@ function onFabClick() {
 
 function renderNav() {
   const container = document.getElementById('routine-tabs');
+  const short = name => name.split(' ').slice(0, 2).join(' ');
   let html = data.routines.map((r, i) => {
-    const label = escapeHtml(r.name.split(' ').slice(0, 2).join(' '));
+    const repeated = data.routines.filter(o => short(o.name) === short(r.name)).length > 1;
+    const label = escapeHtml(repeated ? r.name : short(r.name));
     return `<button class="nav-tab ${i === data.activeRoutine ? 'active' : ''}" onclick="switchTab(${i})">${label}</button>`;
   }).join('');
   html += `<button class="nav-tab nav-tab-add" onclick="openAddRoutine()" aria-label="Nueva rutina">${ICONS.plus}</button>`;
@@ -642,7 +644,7 @@ function renderExercises() {
               ${escapeHtml(ex.name)}
               ${isPersonalRecord(ex) ? `<span class="pr-badge">${ICONS.trophy}RÉCORD</span>` : ''}
             </div>
-            <div class="exercise-meta">${escapeHtml(ex.sets)} series · ${escapeHtml(ex.reps)} reps</div>
+            <div class="exercise-meta">${escapeHtml(ex.sets)} series · ${escapeHtml(ex.reps)}${/[a-záéíóú]/i.test(ex.reps) ? '' : ' reps'}</div>
           </div>
           <div class="exercise-weight"><b>${escapeHtml(ex.weight)}</b><small>${escapeHtml(unit)}</small></div>
         </div>

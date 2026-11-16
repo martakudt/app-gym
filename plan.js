@@ -22,7 +22,7 @@ const BIKE_KINDS = {
 };
 
 // ---------- Default plan ----------
-const PLAN_VERSION = 7;
+const PLAN_VERSION = 8;
 
 const WARMUP = {
   title: `Calentamiento (10')`,
@@ -360,8 +360,15 @@ let planWeekIndex = null;
 let bikeChart = null;
 let workoutDraft = null;
 
+function createStrengthRoutines() {
+  data.plan.workouts.filter(w => w.type === 'fuerza').forEach(w => ensureWorkoutRoutine(w));
+}
+
 function plan() {
-  if (!data.plan) data.plan = defaultPlan();
+  if (!data.plan) {
+    data.plan = defaultPlan();
+    createStrengthRoutines();
+  }
   const p = data.plan;
   if (!Array.isArray(p.skipped)) p.skipped = [];
   if (!Array.isArray(p.goals)) p.goals = [];
@@ -413,6 +420,7 @@ function applyRideDays(fromWeek) {
 // exercises, one heavy hinge a week (RDL on B) and no chest work. v5: legs and
 // upper body alternate within each Full Body. v6: ride texts no longer assume
 // Saturday (the ride days can be chosen). v7: warm-up without push-ups.
+// v8: the strength workouts also exist as routines in Rutina, to log the weights there.
 // Default workouts never edited by hand get the new content.
 function migratePlan(p) {
   const fresh = defaultWorkouts();
@@ -420,6 +428,7 @@ function migratePlan(p) {
   p.phases.forEach(ph => {
     if (ph.focus) ph.focus = ph.focus.replace('Plan B de rodillo', 'Plan B en la bici estática');
   });
+  if ((p.version || 1) < 8) createStrengthRoutines();
   p.version = PLAN_VERSION;
 }
 
@@ -567,6 +576,8 @@ function dayStatus(i, wd) {
   if (findPlanActivity(i, wd, id) >= 0) return 'done';
   // A long ride added from the calendar (with its km in the notes) also counts
   if (LONG_RIDE_IDS.includes(id) && weekLongRide(i) >= week.km * 0.8) return 'done';
+  // A strength workout logged in its routine (Rutina) that week also counts
+  if (routineLogDate(i, id)) return 'done';
   if (plan().skipped.includes(skipKey(i, wd, id))) return 'skipped';
   return 'pending';
 }
@@ -707,11 +718,17 @@ function openPlanDay(i, wd) {
   let actions = '';
   if (status === 'done') {
     const a = actIndex >= 0 ? data.activities[actIndex] : null;
+    const logDate = routineLogDate(i, id);
     const detail = a
       ? [a.km ? `${a.km} km` : '', a.minutes ? `${a.minutes} min` : '', a.date !== date ? formatShortDate(a.date) : ''].filter(Boolean).join(' · ')
-      : `salida de ${weekLongRide(i)} km apuntada en el calendario`;
+      : logDate ? `pesos apuntados en Rutina el ${formatShortDate(logDate)}` : `salida de ${weekLongRide(i)} km apuntada en el calendario`;
     actions += `<div class="plan-done-banner">${ICONS.check}<span>Hecho${detail ? ` · ${escapeHtml(detail)}` : ''}</span></div>`;
     if (a) actions += `<button class="btn-secondary" onclick="undoPlanDone(${i}, ${wd})">Deshacer</button>`;
+  } else if (w.type === 'fuerza') {
+    // Weights are logged exercise by exercise in Rutina; that marks the day as done
+    actions += `<button class="btn-primary btn-with-icon" onclick="openWorkoutRoutine('${id}')">${ICONS.edit} Apuntar pesos en Rutina</button>`;
+    actions += `<button class="btn-secondary" onclick="openPlanDone(${i}, ${wd})">Marcar como hecho sin pesos</button>`;
+    actions += `<button class="btn-secondary" onclick="toggleSkip(${i}, ${wd})">${status === 'skipped' ? 'Quitar "saltado"' : 'Saltar este día'}</button>`;
   } else {
     actions += `<button class="btn-primary btn-with-icon" onclick="openPlanDone(${i}, ${wd})">${ICONS.check} Marcar como hecho</button>`;
     if (id === 'bike-long') actions += `<button class="btn-secondary" onclick="swapToIndoor(${i}, ${wd})">Llueve: cambiar por bici estática</button>`;
@@ -751,6 +768,48 @@ function workoutExercises(w) {
   return out;
 }
 
+// The routine in Rutina for a strength workout, created with its exercises if missing
+// (each one starts with the last weight used for it, if any)
+function ensureWorkoutRoutine(w) {
+  let routine = data.routines.find(r => r.name === w.name);
+  if (routine) return routine;
+  routine = {
+    name: w.name,
+    exercises: workoutExercises(w).map(ex => {
+      const last = lastLogFor(ex.name);
+      const weight = last ? (last.log.weights ? last.log.weights[0] : last.log.weight) : 0;
+      return { name: ex.name, sets: ex.sets, reps: ex.reps, weight: weight || 0, unit: 'kg', done: false, logs: [] };
+    })
+  };
+  data.routines.push(routine);
+  return routine;
+}
+
+// Date of a log in the workout's routine within week i (null if none)
+function routineLogDate(i, id) {
+  const w = workoutById(id);
+  if (!w || w.type !== 'fuerza') return null;
+  const routine = data.routines.find(r => r.name === w.name);
+  if (!routine) return null;
+  const start = weekStart(i);
+  const end = weekEnd(i);
+  let found = null;
+  routine.exercises.forEach(ex => ex.logs.forEach(l => {
+    if (l.date >= start && l.date <= end && (!found || l.date < found)) found = l.date;
+  }));
+  return found;
+}
+
+function openWorkoutRoutine(id) {
+  const w = workoutById(id);
+  if (!w) return;
+  const routine = ensureWorkoutRoutine(w);
+  data.activeRoutine = data.routines.indexOf(routine);
+  saveData(data);
+  closeModal();
+  switchView('routine');
+}
+
 function lastLogFor(name) {
   const key = normName(name);
   let best = null;
@@ -777,40 +836,13 @@ function openPlanDone(i, wd) {
     openBikeLog(date, id);
     return;
   }
-
-  // Strength: one row per set, with last time's weights already filled in
-  const exercises = workoutExercises(w);
-  const exHtml = exercises.map((ex, k) => {
-    const last = lastLogFor(ex.name);
-    let rows = '';
-    for (let s = 0; s < ex.sets; s++) {
-      const prev = last ? (last.log.weights ? (last.log.weights[s] ?? last.log.weights[0]) : last.log.weight) : '';
-      rows += `
-        <div class="series-row">
-          <span class="series-label">Serie ${s + 1}</span>
-          <input type="number" inputmode="decimal" step="0.5" placeholder="kg" id="plw-${k}-${s}" value="${escapeHtml(prev ?? '')}" class="series-weight">
-          <span class="series-x">×</span>
-          <input type="number" inputmode="numeric" placeholder="${escapeHtml(ex.reps.split(' ')[0])}" id="plr-${k}-${s}" class="series-reps">
-        </div>`;
-    }
-    return `
-      <div class="plan-log-ex">
-        <div class="plan-log-name">${escapeHtml(ex.name)}<small>${ex.sets} × ${escapeHtml(ex.reps)}</small></div>
-        <div class="workout-last">${last ? lastLogText(ex.name) : 'Primera vez: elige un peso cómodo'}</div>
-        <div class="series-header"><span></span><span>Peso (kg)</span><span></span><span>Reps</span></div>
-        ${rows}
-      </div>`;
-  }).join('');
-
+  // Strength weights are logged in Rutina; this form only marks the day as done
   openModal(`
     <h2>${escapeHtml(w.name)}</h2>
     <div class="form-group">
       <label>Fecha</label>
       <input type="date" id="plan-done-date" value="${date}">
     </div>
-    ${exercises.length ? `
-      <p class="modal-text">Apunta las repeticiones de cada serie. El peso viene de la última vez: cámbialo si has usado otro. Las series que dejes sin reps no se guardan.</p>
-      ${exHtml}` : ''}
     <div class="form-group">
       <label>Duración (min)</label>
       <input type="number" inputmode="numeric" id="plan-done-minutes" value="${w.minutes || ''}" placeholder="Opcional">
@@ -824,55 +856,14 @@ function openPlanDone(i, wd) {
   `);
 }
 
-// Adds the logged sets to the routine named like the workout (created if needed)
-function saveWorkoutLogs(w, date) {
-  const exercises = workoutExercises(w);
-  let routine = null;
-  let saved = 0;
-  exercises.forEach((ex, k) => {
-    const weights = [];
-    const reps = [];
-    for (let s = 0; s < ex.sets; s++) {
-      const weight = parseFloat(valueOf(`plw-${k}-${s}`).replace(',', '.'));
-      const rep = parseInt(valueOf(`plr-${k}-${s}`));
-      if (rep > 0) {
-        // A set without weight repeats the previous set's
-        weights.push(Number.isFinite(weight) ? weight : (weights.length ? weights[weights.length - 1] : 0));
-        reps.push(rep);
-      }
-    }
-    if (!reps.length) return;
-    if (!routine) {
-      routine = data.routines.find(r => r.name === w.name);
-      if (!routine) {
-        routine = { name: w.name, exercises: [] };
-        data.routines.push(routine);
-      }
-    }
-    let target = routine.exercises.find(e => normName(e.name) === normName(ex.name));
-    if (!target) {
-      target = { name: ex.name, sets: ex.sets, reps: ex.reps, weight: 0, unit: 'kg', done: false, logs: [] };
-      routine.exercises.push(target);
-    }
-    target.logs.push({ date, weights, reps });
-    target.logs.sort((a, b) => a.date.localeCompare(b.date));
-    target.weight = weights[0];
-    if (date === todayStr()) target.done = true;
-    saved++;
-  });
-  return saved;
-}
-
 function savePlanDone(i, wd) {
   const id = plan().weeks[i].days[wd];
   const w = workoutById(id);
   if (!w) return;
   const planned = weekDate(i, wd);
-  const date = valueOf('plan-done-date') || planned;
-  const saved = w.type === 'fuerza' ? saveWorkoutLogs(w, date) : 0;
   // The calendar gets the real date; planDate ties it to the planned day
   pushActivity({
-    date,
+    date: valueOf('plan-done-date') || planned,
     type: PLAN_TYPES[w.type].activity,
     minutes: parseInt(valueOf('plan-done-minutes')) || null,
     notes: valueOf('plan-done-notes'),
@@ -883,19 +874,15 @@ function savePlanDone(i, wd) {
   unskip(i, wd, id);
   saveData(data);
   closeModal();
-  toast(saved ? `¡Entreno hecho! Pesos guardados en la rutina "${w.name}"` : '¡Entreno hecho!');
+  toast('¡Entreno hecho!');
 }
 
+// Only removes the "done" mark: weights logged in Rutina are kept
 function undoPlanDone(i, wd) {
   const id = plan().weeks[i].days[wd];
   const index = findPlanActivity(i, wd, id);
   if (index < 0) return;
-  const w = workoutById(id);
-  const a = data.activities[index];
-  const routine = w && data.routines.find(r => r.name === w.name);
-  const logged = routine ? routine.exercises.filter(e => e.logs.some(l => l.date === a.date)) : [];
-  if (!confirm(`¿Quitar el "hecho"? También se borra del calendario${logged.length ? ' y se borran los pesos que apuntaste ese día' : ''}.`)) return;
-  logged.forEach(e => { e.logs = e.logs.filter(l => l.date !== a.date); });
+  if (!confirm('¿Quitar el "hecho"? También se borra del calendario.')) return;
   data.activities.splice(index, 1);
   saveData(data);
   closeModal();
@@ -1636,6 +1623,7 @@ function resetPlan() {
   data.plan = defaultPlan();
   Object.assign(data.plan, { longDay, easyDay });
   applyRideDays(0);
+  createStrengthRoutines();
   planWeekIndex = null;
   saveData(data);
   toast('Plan restablecido');
